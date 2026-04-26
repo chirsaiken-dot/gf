@@ -3248,7 +3248,7 @@ end
 local FOV_VALUE = Config["FOV Value"] or 90
 
 LOCK_RADIUS = 70
-local LOCK_SPEED = 50
+local LOCK_SPEED = 59
 local PREDICTION = 0.18
 local TP_TRICK_COOLDOWN = 0.65
 local lastTpTrick = 0
@@ -3350,11 +3350,12 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-        -- seguir la cabeza con prediccion vertical y oscilacion 6 studs
-        local hoverY = 3 + math.sin(tick() * 3.2) * 3
+        -- tracking OP: copia altura del target y responde a subidas/bajadas rapido
         local targetVelocity = tHrp.AssemblyLinearVelocity
-        local predictedY = math.clamp(targetVelocity.Y * PREDICTION, -5, 8)
-        local targetPos = tHead.Position + Vector3.new(0, hoverY + predictedY, 0)
+        local copyHeight = math.clamp(targetVelocity.Y * 0.24, -8, 10)
+        local trickDownOffset = (targetVelocity.Y < -2) and -2.5 or 0
+        local hoverY = 2 + math.sin(tick() * 4.0) * 2
+        local targetPos = tHead.Position + Vector3.new(0, hoverY + copyHeight + trickDownOffset, 0)
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
@@ -3367,9 +3368,9 @@ local function startLock()
             lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
 		end
 
-        -- trick TP down: si el target sube fuerte, te baja rapido para desync visual
-        if tHrp.AssemblyLinearVelocity.Y > 8 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
-            hrp.CFrame = hrp.CFrame * CFrame.new(0, -6, 0)
+        -- trick TP down: cuando el target sube fuerte, bajas mas para engañar
+        if tHrp.AssemblyLinearVelocity.Y > 6 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
+            hrp.CFrame = hrp.CFrame * CFrame.new(0, -8, 0)
             lastTpTrick = tick()
         end
 
