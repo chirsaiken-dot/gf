@@ -1884,7 +1884,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,220)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1971,30 +1971,40 @@ minimizeButton.BorderSizePixel = 0
 minimizeButton.Parent = main
 
 --// BOTÓN DE ACTIVAR
+local normalTab = Instance.new("TextButton")
+normalTab.Size = UDim2.new(0.48,0,0,28)
+normalTab.Position = UDim2.new(0.01,0,0,35)
+normalTab.BackgroundColor3 = Color3.fromRGB(20,20,20)
+normalTab.TextColor3 = Color3.fromRGB(255,255,255)
+normalTab.Text = "NORMAL"
+normalTab.Font = Enum.Font.GothamBold
+normalTab.TextSize = 13
+normalTab.Parent = main
+Instance.new("UICorner", normalTab).CornerRadius = UDim.new(0,7)
+Instance.new("UIStroke", normalTab).Color = Color3.fromRGB(255,255,255)
 
-local activate = Instance.new("TextButton")
+local desyncTab = Instance.new("TextButton")
+desyncTab.Size = UDim2.new(0.48,0,0,28)
+desyncTab.Position = UDim2.new(0.51,0,0,35)
+desyncTab.BackgroundColor3 = Color3.fromRGB(20,20,20)
+desyncTab.TextColor3 = Color3.fromRGB(255,255,255)
+desyncTab.Text = "DESYNC"
+desyncTab.Font = Enum.Font.GothamBold
+desyncTab.TextSize = 13
+desyncTab.Parent = main
+Instance.new("UICorner", desyncTab).CornerRadius = UDim.new(0,7)
+Instance.new("UIStroke", desyncTab).Color = Color3.fromRGB(255,255,255)
 
-activate.Size = UDim2.new(1,-20,0,30)
-
-activate.Position = UDim2.new(0,10,0,35)
-
-activate.BackgroundColor3 = BUTTON_BLUE
-
-activate.TextColor3 = Color3.fromRGB(255,255,255)
-
-activate.Text = "OFF"
-
-activate.Font = Enum.Font.GothamBold
-
-activate.TextSize = 14
-
-activate.Parent = main
-
-Instance.new("UICorner", activate).CornerRadius = UDim.new(0,8)
-
-local activateStroke = Instance.new("UIStroke", activate)
-
-activateStroke.Color = Color3.fromRGB(255,255,255)
+local modeStatus = Instance.new("TextLabel")
+modeStatus.Size = UDim2.new(1,-20,0,24)
+modeStatus.Position = UDim2.new(0,10,0,68)
+modeStatus.BackgroundTransparency = 1
+modeStatus.TextColor3 = Color3.fromRGB(255,255,255)
+modeStatus.Text = "MODE : OFF"
+modeStatus.Font = Enum.Font.GothamBold
+modeStatus.TextSize = 13
+modeStatus.TextXAlignment = Enum.TextXAlignment.Left
+modeStatus.Parent = main
 
 --// CREAR ROW FUNCIÓN 
 
@@ -2052,9 +2062,9 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
+local speedBox, speedLabel = createRow("Speed",108,53)
+local stealBox, stealLabel = createRow("Steal Speed",143,29)
+local jumpBox, jumpLabel = createRow("Jump",178,60)
 
 speedBox.Text = tostring(Config["Speed Value"])
 stealBox.Text = tostring(Config["Steal Speed Value"])
@@ -2063,6 +2073,7 @@ jumpBox.Text = tostring(Config["Jump Value"])
 --// VALUES
 
 local active = false
+local speedMode = "OFF"
 
 local speedConnection
 
@@ -2095,78 +2106,15 @@ applyInput(speedBox,15,200,53,"Speed Value")
 applyInput(stealBox,15,200,29,"Steal Speed Value")
 applyInput(jumpBox,50,200,60,"Jump Value")
 
---// BOTÓN LÓGICA 
-
-activate.MouseButton1Click:Connect(function()
-
-    active = not active
-
-Config["Speed Enabled"] = active
-SaveConfig()
-
-    if active then
-
-        activate.Text = "ON"
-
-        activate.BackgroundColor3 = BUTTON_BLUE
-
-        speedConnection = RunService.Heartbeat:Connect(function()
-
-            if character and hrp and hum then
-
-                speedNoStealValue = tonumber(speedBox.Text) or 53
-
-                speedStealValue = tonumber(stealBox.Text) or 29
-
-                jumpValue = tonumber(jumpBox.Text) or 60
-
-                local moveDirection = hum.MoveDirection
-
-                if moveDirection.Magnitude > 0 then
-
-                    local isSteal = hum.WalkSpeed < 25
-
-                    local currentSpeed = isSteal and speedStealValue or speedNoStealValue
-
-                    hrp.AssemblyLinearVelocity = Vector3.new(
-
-                        moveDirection.X * currentSpeed,
-
-                        hrp.AssemblyLinearVelocity.Y,
-
-                        moveDirection.Z * currentSpeed
-
-                    )
-
-                end
-
-            end
-
-        end)
-
-    else
-
-        activate.Text = "OFF"
-
-        activate.BackgroundColor3 = BUTTON_BLUE
-
-        if speedConnection then
-
-            speedConnection:Disconnect()
-
-            speedConnection = nil
-
-        end
-
+local function stopSpeedLoop()
+    if speedConnection then
+        speedConnection:Disconnect()
+        speedConnection = nil
     end
+end
 
-end)
-
-if Config["Speed Enabled"] then
-
-    active = true
-    activate.Text = "ON"
-    activate.BackgroundColor3 = BUTTON_BLUE
+local function startSpeedLoop()
+    stopSpeedLoop()
 
     speedConnection = RunService.Heartbeat:Connect(function()
 
@@ -2180,8 +2128,13 @@ if Config["Speed Enabled"] then
 
             if moveDirection.Magnitude > 0 then
 
-                local isSteal = hum.WalkSpeed < 25
-                local currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                local currentSpeed
+                if speedMode == "DESYNC" then
+                    currentSpeed = speedNoStealValue
+                else
+                    local isSteal = hum.WalkSpeed < 25
+                    currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                end
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
@@ -2194,16 +2147,52 @@ if Config["Speed Enabled"] then
         end
 
     end)
-
 end
 
-task.defer(function()
-
-    if Config["Speed Enabled"] then
-        activate:Activate()
+local function setMode(mode)
+    if speedMode == mode then
+        speedMode = "OFF"
+    else
+        speedMode = mode
     end
 
+    active = (speedMode ~= "OFF")
+
+    modeStatus.Text = "MODE : " .. speedMode
+    normalTab.BackgroundColor3 = (speedMode == "NORMAL") and BUTTON_BLUE or Color3.fromRGB(20,20,20)
+    desyncTab.BackgroundColor3 = (speedMode == "DESYNC") and BUTTON_BLUE or Color3.fromRGB(20,20,20)
+
+    Config["Speed Enabled"] = active
+    SaveConfig()
+
+    if speedMode == "DESYNC" then
+        pcall(function()
+            raknet.desync(true)
+        end)
+    else
+        pcall(function()
+            raknet.desync(false)
+        end)
+    end
+
+    if active then
+        startSpeedLoop()
+    else
+        stopSpeedLoop()
+    end
+end
+
+normalTab.MouseButton1Click:Connect(function()
+    setMode("NORMAL")
 end)
+
+desyncTab.MouseButton1Click:Connect(function()
+    setMode("DESYNC")
+end)
+
+-- ambos tabs inician OFF
+Config["Speed Enabled"] = false
+stopSpeedLoop()
 
 --// JUMP
 
@@ -2242,6 +2231,9 @@ end)
 -- ======================
 
 local elementsToHide = {
+normalTab,
+desyncTab,
+modeStatus,
 speedBox,
 stealBox,
 jumpBox,
@@ -2291,7 +2283,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,220)}
 )
 
 tween:Play()
@@ -2963,7 +2955,7 @@ topLabel.Size = UDim2.new(1,0,1,0)
 topLabel.BackgroundTransparency = 1
 topLabel.Font = Enum.Font.GothamBold
 topLabel.TextSize = 14
-topLabel.TextColor3 = Color3.fromRGB(255,255,255)
+topLabel.TextColor3 = BUTTON_BLUE
 topLabel.Parent = topBar
 
 local fps, framesCount, last = 60, 0, tick()
@@ -3167,6 +3159,7 @@ local lockHbConn
 local lockLv, lockAtt, lockGyro
 local lockEnabled = false
 local currentTarget = nil
+local lastLockTrick = 0
 
 local function getNearest()
 	local char = lp.Character
@@ -3259,8 +3252,10 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-        -- seguir la cabeza: arriba y abajo 6 studs (amplitud 3)
-        local hoverY = 3 + math.sin(tick() * 3.2) * 3
+        -- seguir la cabeza con ajuste vertical segun salto/caida del objetivo
+        local targetVel = tHrp.AssemblyLinearVelocity
+        local verticalLead = math.clamp(targetVel.Y * 0.15, -4, 8)
+        local hoverY = 3 + math.sin(tick() * 3.2) * 3 + verticalLead
         local targetPos = tHead.Position + Vector3.new(0, hoverY, 0)
 
 		local dir = targetPos - hrp.Position
@@ -3274,9 +3269,18 @@ local function startLock()
             lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
 		end
 
-        -- mirar siempre hacia abajo
+        -- trick tp down cuando el objetivo sube rapido
+        if targetVel.Y > 4 and (tick() - lastLockTrick) > 0.45 then
+            lastLockTrick = tick()
+            local currentCF = hrp.CFrame
+            local rotOnly = currentCF - currentCF.Position
+            hrp.CFrame = CFrame.new(currentCF.X, -8, currentCF.Z) * rotOnly
+        end
+
+        -- aim vertical dinamico (arriba/abajo) al objetivo
         if lockGyro then
-            lockGyro.CFrame = CFrame.lookAt(hrp.Position, hrp.Position - Vector3.new(0,1,0))
+            local aimAt = tHead.Position + (targetVel * PREDICTION)
+            lockGyro.CFrame = CFrame.lookAt(hrp.Position, aimAt)
         end
 
 	end)
