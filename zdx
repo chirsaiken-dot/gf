@@ -3252,6 +3252,7 @@ local LOCK_SPEED = 59
 local PREDICTION = 0.18
 local TP_TRICK_COOLDOWN = 0.65
 local lastTpTrick = 0
+local LOCK_DOWN_OFFSET = 2
 
 local lockGui
 local lockHbConn
@@ -3316,7 +3317,7 @@ local function startLock()
 
 	lockLv = Instance.new("LinearVelocity", hrp)
 	lockLv.Attachment0 = lockAtt
-	lockLv.MaxForce = 50000
+    lockLv.MaxForce = 120000
 	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
 	lockLv.Enabled = false
 
@@ -3350,31 +3351,32 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-        -- bat aimbot OP: copiar altura del target en vivo (sube/baja) y aplicar trick vertical
+        -- seguimiento OP: copiar altura del target y mantenerse ligeramente abajo
+        local hoverY = 2 + math.sin(tick() * 4) * 2
         local targetVelocity = tHrp.AssemblyLinearVelocity
-        local copyHeightY = tHead.Position.Y
-        local verticalLead = math.clamp(targetVelocity.Y * 0.24, -10, 12)
-        local trickDownBias = (targetVelocity.Y < -2) and -1.75 or 0
+        local predictedY = math.clamp(targetVelocity.Y * PREDICTION, -8, 10)
+        local copiedY = tHrp.Position.Y - LOCK_DOWN_OFFSET
         local targetPos = Vector3.new(
             tHead.Position.X,
-            copyHeightY + verticalLead + trickDownBias,
+            copiedY + hoverY + predictedY,
             tHead.Position.Z
         )
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
 
-        local stopDistance = 0.75
+        local stopDistance = 0.3
 
-        if distance > stopDistance then
-            lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
+		if distance > stopDistance then
+			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
 		else
-            lockLv.VectorVelocity = Vector3.new(
-                tHrp.AssemblyLinearVelocity.X,
-                math.clamp(tHrp.AssemblyLinearVelocity.Y, -35, 35),
-                tHrp.AssemblyLinearVelocity.Z
-            )
+            lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
 		end
+
+        -- copiado vertical duro para trackear subidas/bajadas instantaneas
+        if math.abs(hrp.Position.Y - copiedY) > 6 then
+            hrp.CFrame = CFrame.new(hrp.Position.X, copiedY, hrp.Position.Z)
+        end
 
         -- trick TP down: si el target sube fuerte, te baja rapido para desync visual
         if tHrp.AssemblyLinearVelocity.Y > 8 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
