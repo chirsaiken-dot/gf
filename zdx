@@ -10,6 +10,7 @@ local fovConnection = nil
 local oldFOV = nil
 
 local TweenService = game:GetService("TweenService")
+local BUTTON_BLUE = Color3.fromRGB(0, 120, 255)
  
 --// ORRXL4 HUB CONFIG SYSTEM
 
@@ -629,7 +630,7 @@ function CreateTPButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = tpGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -663,13 +664,13 @@ function CreateTPButton()
         if debounce then return end
 
         debounce = true
-        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
+        button.BackgroundColor3 = BUTTON_BLUE
 
         doTP()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        button.BackgroundColor3 = BUTTON_BLUE
         debounce = false
 
     end)
@@ -1023,7 +1024,7 @@ dragHandle.Parent = main
 local playButton = Instance.new("TextButton")
 playButton.Size = UDim2.new(0,180,0,34)
 playButton.Position = UDim2.new(0.5,-90,0,30)
-playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+playButton.BackgroundColor3 = BUTTON_BLUE
 playButton.Text = "Play"
 playButton.TextColor3 = Color3.fromRGB(255,255,255)
 playButton.TextSize = 14
@@ -1527,7 +1528,7 @@ end
 local function resetPlayButton()
     routeRunning = false
     playButton.Text = "Play"
-    playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    playButton.BackgroundColor3 = BUTTON_BLUE
 end
 
 local function walkRoute(route)
@@ -1595,12 +1596,12 @@ local function walkRoute(route)
 
     if activeRoute == routes.START_A then
         leftEnabled = false
-        leftButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        leftButton.BackgroundColor3 = BUTTON_BLUE
     end
 
     if activeRoute == routes.START_B then
         rightEnabled = false
-        rightButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        rightButton.BackgroundColor3 = BUTTON_BLUE
     end
 
     selectedRoute = nil
@@ -1622,7 +1623,7 @@ playButton.MouseButton1Click:Connect(function()
         currentRouteId += 1
 
         playButton.Text = "Play"
-        playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        playButton.BackgroundColor3 = BUTTON_BLUE
 
         clearAutoWalkParts()
         return
@@ -1645,7 +1646,7 @@ playButton.MouseButton1Click:Connect(function()
         currentRouteId += 1
 routeRunning = true
         playButton.Text = "STOP"
-        playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        playButton.BackgroundColor3 = BUTTON_BLUE
 
         if not routeRunning then
     loadRouteToTextboxes(route)
@@ -1665,7 +1666,7 @@ task.spawn(function()
     end
 
     playButton.Text = "Play"
-    playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    playButton.BackgroundColor3 = BUTTON_BLUE
 
 end)
     end
@@ -1977,7 +1978,7 @@ activate.Size = UDim2.new(1,-20,0,30)
 
 activate.Position = UDim2.new(0,10,0,35)
 
-activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
+activate.BackgroundColor3 = BUTTON_BLUE
 
 activate.TextColor3 = Color3.fromRGB(255,255,255)
 
@@ -2107,7 +2108,7 @@ SaveConfig()
 
         activate.Text = "ON"
 
-        activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        activate.BackgroundColor3 = BUTTON_BLUE
 
         speedConnection = RunService.Heartbeat:Connect(function()
 
@@ -2147,7 +2148,7 @@ SaveConfig()
 
         activate.Text = "OFF"
 
-        activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        activate.BackgroundColor3 = BUTTON_BLUE
 
         if speedConnection then
 
@@ -2165,7 +2166,7 @@ if Config["Speed Enabled"] then
 
     active = true
     activate.Text = "ON"
-    activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    activate.BackgroundColor3 = BUTTON_BLUE
 
     speedConnection = RunService.Heartbeat:Connect(function()
 
@@ -2628,7 +2629,7 @@ local function createDropButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = dropGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -2658,13 +2659,13 @@ local function createDropButton()
         if debounce then return end
         debounce = true
 
-        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
+        button.BackgroundColor3 = BUTTON_BLUE
 
         doDrop()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        button.BackgroundColor3 = BUTTON_BLUE
         debounce = false
 
     end)
@@ -2734,7 +2735,7 @@ end)
 
         if spinActive then
             button.Text = "SPINNING"
-            button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            button.BackgroundColor3 = BUTTON_BLUE
             startSpinBody()
         else
             button.Text = "SPIN"
@@ -2775,7 +2776,7 @@ function createFlingGui()
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    btn.BackgroundColor3 = BUTTON_BLUE
     btn.Parent = flingGui
 
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
@@ -2807,13 +2808,13 @@ end)
         if flingActive then
 
             btn.Text = "FLING ON"
-            btn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+            btn.BackgroundColor3 = BUTTON_BLUE
             startFling()
 
         else
 
             btn.Text = "FLING"
-            btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+            btn.BackgroundColor3 = BUTTON_BLUE
             stopFling()
 
         end
@@ -2991,7 +2992,7 @@ toggleBtn.Position = UDim2.new(
     Config["Toggle Button Y"],
     Config["Toggle Button OffsetY"]
 )
-toggleBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+toggleBtn.BackgroundColor3 = BUTTON_BLUE
 toggleBtn.Text = "≡"
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 38
@@ -3031,7 +3032,7 @@ strokeHub.Color = Color3.fromRGB(255,255,255)
 strokeHub.Thickness = 2
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.55,0,0,40)
+title.Size = UDim2.new(1,-24,0,40)
 title.Position = UDim2.new(0,12,0,8)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
@@ -3040,19 +3041,6 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Text = "Tyriq Hub"
 title.Parent = hub
-
-local discordLabel = Instance.new("TextButton")
-discordLabel.Size = UDim2.new(0.4,0,0,40)
-discordLabel.Position = UDim2.new(0.50,6,0,8)
-discordLabel.BackgroundTransparency = 1
-discordLabel.TextColor3 = Color3.fromRGB(180,180,180)
-discordLabel.TextSize = 12
-discordLabel.Font = Enum.Font.Gotham
-discordLabel.Text = "https://discord.gg/5WjWu7JYz"
-discordLabel.Parent = hub
-discordLabel.MouseButton1Click:Connect(function()
-    setclipboard("https://discord.gg/5WjWu7JYz")
-end)
 
 -- AUTO STEAL NEAREST
 autoStealEnabled = false
@@ -3326,7 +3314,7 @@ function createLockGui()
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
 	btn.TextColor3 = Color3.new(1,1,1)
-	btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    btn.BackgroundColor3 = BUTTON_BLUE
 	btn.Parent = lockGui
 
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
@@ -3365,7 +3353,7 @@ btn.MouseButton1Click:Connect(function()
 
 	if lockEnabled then
 		btn.Text = "LOCKED"
-		btn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+        btn.BackgroundColor3 = BUTTON_BLUE
 		startLock()
 	else
 		btn.Text = "LOCK"
@@ -3547,7 +3535,7 @@ function CreateTPDownButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = tpDownGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -3577,13 +3565,13 @@ end)
         if tpDownDebounce then return end
         tpDownDebounce = true
 
-        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
+        button.BackgroundColor3 = BUTTON_BLUE
 
         doTPDown()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
+        button.BackgroundColor3 = BUTTON_BLUE
         tpDownDebounce = false
 
     end)
@@ -3635,9 +3623,9 @@ end
 local function ShowSection(sectionName)
     for _,frame in pairs(frames) do frame.Visible = false end
     frames[sectionName].Visible = true
-    for _,b in pairs(sectionButtons) do b.BackgroundColor3 = Color3.fromRGB(10,10,10) end
+    for _,b in pairs(sectionButtons) do b.BackgroundColor3 = BUTTON_BLUE end
     for _,b in pairs(sectionButtons) do
-        if b.Text == sectionName then b.BackgroundColor3 = Color3.fromRGB(0,120,255) end
+        if b.Text == sectionName then b.BackgroundColor3 = BUTTON_BLUE end
     end
 end
 
@@ -3645,7 +3633,7 @@ for i,v in ipairs(sections) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, sectionWidth,0,28)
     btn.Position = UDim2.new(0,startX + (i-1)*(sectionWidth+spacing),0,sectionY)
-    btn.BackgroundColor3 = Color3.fromRGB(10,10,10)
+    btn.BackgroundColor3 = BUTTON_BLUE
     btn.Text = v
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 13
@@ -3734,7 +3722,7 @@ radioTextbox = textbox
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0,50,0,22)
     button.Position = UDim2.new(1,-60,0.5,-11)
-    button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Text = ""
     button.Parent = container
     Instance.new("UICorner", button).CornerRadius = UDim.new(1,0)
@@ -3751,11 +3739,11 @@ radioTextbox = textbox
 -- Aplicar estado visual al cargar
 task.defer(function()
     if enabled then
-        button.BackgroundColor3 = Color3.fromRGB(0,120,255)
+        button.BackgroundColor3 = BUTTON_BLUE
         circle.Position = UDim2.new(1,-20,0.5,-9)
 
     else
-        button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        button.BackgroundColor3 = BUTTON_BLUE
         circle.Position = UDim2.new(0,2,0.5,-9)
     end
 end)
@@ -3763,10 +3751,10 @@ end)
     button.MouseButton1Click:Connect(function()
         enabled = not enabled
         if enabled then
-            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(0,120,255)}):Play()
+            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = BUTTON_BLUE}):Play()
             TweenService:Create(circle, TweenInfo.new(0.25), {Position = UDim2.new(1,-20,0.5,-9)}):Play()
         else
-            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(50,50,50)}):Play()
+            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = BUTTON_BLUE}):Play()
             TweenService:Create(circle, TweenInfo.new(0.25), {Position = UDim2.new(0,2,0.5,-9)}):Play()
         end
 
@@ -4321,7 +4309,7 @@ end
     end)
 end
 
---// DELTA DESYNC (LAGBACK)
+--// DESYNC
 
 do
 local parentFrame = frames["Combat"]
@@ -4394,7 +4382,7 @@ button.BackgroundTransparency = 1
 button.Font = Enum.Font.GothamBold  
 button.TextSize = 15  
 button.TextColor3 = Color3.fromRGB(255,255,255)  
-button.Text = "Delta Desync (Lagback) : OFF"  
+button.Text = "Desync : OFF"  
 button.Parent = container  
 
 local enabled = false  
@@ -4428,7 +4416,7 @@ if enabled then
         end
     end
 
-    button.Text = "Delta Desync (Lagback) : ON"  
+    button.Text = "Desync : ON"  
 
 else  
 
@@ -4437,7 +4425,7 @@ else
     -- ❌ DESACTIVAR SERVER POS
     disableServerPos()
 
-    button.Text = "Delta Desync (Lagback) : OFF"  
+    button.Text = "Desync : OFF"  
 
 end
 
@@ -5273,7 +5261,7 @@ task.spawn(function()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = tauntGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -5289,7 +5277,7 @@ task.spawn(function()
 
         if tauntActive then
             button.Text = "TAUNT"
-            button.BackgroundColor3 = Color3.fromRGB(200,0,0)
+            button.BackgroundColor3 = BUTTON_BLUE
 
             task.spawn(function()
                 while tauntActive do
@@ -5300,7 +5288,7 @@ task.spawn(function()
 
         else
             button.Text = "TAUNT"
-            button.BackgroundColor3 = Color3.fromRGB(255,255,255)
+            button.BackgroundColor3 = BUTTON_BLUE
         end
 
     end)
