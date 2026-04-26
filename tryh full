@@ -10,7 +10,7 @@ local fovConnection = nil
 local oldFOV = nil
 
 local TweenService = game:GetService("TweenService")
-local BUTTON_BLUE = Color3.fromRGB(0,120,255)
+local BUTTON_BLUE = Color3.fromRGB(102,191,255)
  
 --// ORRXL4 HUB CONFIG SYSTEM
 
@@ -2701,7 +2701,7 @@ local function createSpinButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = spinGui
 
     -- Esquinas curvas
@@ -2739,7 +2739,7 @@ end)
             startSpinBody()
         else
             button.Text = "SPIN"
-            button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+            button.BackgroundColor3 = BUTTON_BLUE
             stopSpinBody()
         end
     end)
@@ -2980,7 +2980,7 @@ RunService.RenderStepped:Connect(function()
         local dataPing = network.ServerStatsItem:FindFirstChild("Data Ping")
         if dataPing then ping = math.floor(dataPing:GetValue()) end
     end
-    topLabel.Text = "TyriqHubDuels | FPS "..fps.." | PING "..ping.." ms"
+    topLabel.Text = "Tyriq Duels | FPS "..fps.." | PING "..ping.." ms"
 end)
 
 -- BOTÓN ABRIR Y CERRAR GUI
@@ -3032,14 +3032,14 @@ strokeHub.Color = Color3.fromRGB(255,255,255)
 strokeHub.Thickness = 2
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.55,0,0,40)
+title.Size = UDim2.new(1,-24,0,40)
 title.Position = UDim2.new(0,12,0,8)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Text = "Tyriq Hub"
+title.TextColor3 = BUTTON_BLUE
+title.Text = "Tyriq Duels"
 title.Parent = hub
 
 -- AUTO STEAL NEAREST
@@ -3229,6 +3229,11 @@ local function startLock()
 	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
 	lockLv.Enabled = false
 
+    lockGyro = Instance.new("BodyGyro", hrp)
+    lockGyro.MaxTorque = Vector3.new(1e7,1e7,1e7)
+    lockGyro.P = 40000
+    lockGyro.D = 1000
+
 	lockHbConn = RunService.Heartbeat:Connect(function()
 
 		if not currentTarget then
@@ -3242,9 +3247,11 @@ local function startLock()
 		end
 
 		local tChar = targetPlayer.Character
+        local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
 		local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+        local tHead = tChar and tChar:FindFirstChild("Head")
 
-		if not tHrp then
+        if not tHrp or not tHead or (tHum and tHum.Health <= 0) then
 			currentTarget = nil
 			lockLv.Enabled = false
 			return
@@ -3252,21 +3259,25 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-		-- 🔥 DIRECTO AL CUERPO (SIN PREDICCIÓN)
-		local targetPos = tHrp.Position
+        -- seguir la cabeza: arriba y abajo 6 studs (amplitud 3)
+        local hoverY = 3 + math.sin(tick() * 3.2) * 3
+        local targetPos = tHead.Position + Vector3.new(0, hoverY, 0)
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
 
-		local stopDistance = 1.2
+        local stopDistance = 0.75
 
 		if distance > stopDistance then
-			-- ir directo al target
 			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
 		else
-			-- 🧲 pegarse (copiar velocidad)
-			lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity * 1.05
+            lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
 		end
+
+        -- mirar siempre hacia abajo
+        if lockGyro then
+            lockGyro.CFrame = CFrame.lookAt(hrp.Position, hrp.Position - Vector3.new(0,1,0))
+        end
 
 	end)
 
@@ -3291,6 +3302,11 @@ local function stopLock()
 		lockAtt:Destroy()
 		lockAtt = nil
 	end
+
+    if lockGyro then
+        lockGyro:Destroy()
+        lockGyro = nil
+    end
 
 end
 
@@ -3357,7 +3373,7 @@ btn.MouseButton1Click:Connect(function()
 		startLock()
 	else
 		btn.Text = "LOCK"
-		btn.BackgroundColor3 = Color3.fromRGB(0,120,255)
+        btn.BackgroundColor3 = BUTTON_BLUE
 		stopLock()
 	end
 
@@ -4010,7 +4026,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
 				end
 
 			end)
@@ -4972,7 +4988,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
 				end
 
 			end)
@@ -5281,7 +5297,7 @@ task.spawn(function()
 
             task.spawn(function()
                 while tauntActive do
-                    sendMessage("/Tyriq Hub On Top")
+                    sendMessage("/Tyriq Duels On Top")
                     task.wait(1)
                 end
             end)
@@ -5291,6 +5307,46 @@ task.spawn(function()
             button.BackgroundColor3 = BUTTON_BLUE
         end
 
+    end)
+
+end)
+
+task.spawn(function()
+
+    if game:GetService("CoreGui"):FindFirstChild("LaggerButtonGui") then
+        game:GetService("CoreGui").LaggerButtonGui:Destroy()
+    end
+
+    local laggerGui = Instance.new("ScreenGui")
+    laggerGui.Name = "LaggerButtonGui"
+    laggerGui.ResetOnSpawn = false
+    laggerGui.Parent = game:GetService("CoreGui")
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0,120,0,40)
+    button.Position = UDim2.new(0.500, -483, 0.500, -240)
+    button.Text = "LAGGER"
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.TextColor3 = Color3.new(1,1,1)
+    button.BackgroundColor3 = BUTTON_BLUE
+    button.Parent = laggerGui
+
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
+
+    button.Active = true
+    button.Draggable = not UILocked
+
+    local laggerActive = false
+
+    button.MouseButton1Click:Connect(function()
+        laggerActive = not laggerActive
+        button.Text = laggerActive and "LAGGER ON" or "LAGGER"
+        button.BackgroundColor3 = BUTTON_BLUE
+
+        pcall(function()
+            raknet.desync(laggerActive)
+        end)
     end)
 
 end)
