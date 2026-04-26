@@ -39,6 +39,7 @@ local Config = {
     ["Xray Base"] = false,
     ["ESP Players"] = false,
     ["No Walk Animation"] = false,
+    ["Unwalk"] = false,
     ["Auto Bat"] = false,
     ["Lock Target"] = false,
     ["Auto Medusa"] = false,
@@ -106,6 +107,13 @@ local Config = {
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
     ["Jump Value"] = 60,
+    ["Speed Tab"] = 1,
+    ["Speed Value Normal"] = 53,
+    ["Steal Speed Value Normal"] = 29,
+    ["Jump Value Normal"] = 60,
+    ["Speed Value Desync"] = 53,
+    ["Steal Speed Value Desync"] = 29,
+    ["Jump Value Desync"] = 60,
 
     ["AutoPlay Speed"] = 51,
     ["AutoPlay StealSpeed"] = 29,
@@ -1884,7 +1892,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,215)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1970,13 +1978,65 @@ minimizeButton.TextColor3 = title.TextColor3
 minimizeButton.BorderSizePixel = 0
 minimizeButton.Parent = main
 
+local speedTab = tonumber(Config["Speed Tab"]) or 1
+if speedTab ~= 2 then
+    speedTab = 1
+end
+
+if Config["Speed Value Normal"] == nil then
+    Config["Speed Value Normal"] = Config["Speed Value"] or 53
+end
+if Config["Steal Speed Value Normal"] == nil then
+    Config["Steal Speed Value Normal"] = Config["Steal Speed Value"] or 29
+end
+if Config["Jump Value Normal"] == nil then
+    Config["Jump Value Normal"] = Config["Jump Value"] or 60
+end
+if Config["Speed Value Desync"] == nil then
+    Config["Speed Value Desync"] = Config["Speed Value"] or 53
+end
+if Config["Steal Speed Value Desync"] == nil then
+    Config["Steal Speed Value Desync"] = Config["Steal Speed Value"] or 29
+end
+if Config["Jump Value Desync"] == nil then
+    Config["Jump Value Desync"] = Config["Jump Value"] or 60
+end
+
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1,-20,0,24)
+tabFrame.Position = UDim2.new(0,10,0,35)
+tabFrame.BackgroundTransparency = 1
+tabFrame.Parent = main
+
+local normalTab = Instance.new("TextButton")
+normalTab.Size = UDim2.new(0.5,-3,1,0)
+normalTab.Position = UDim2.new(0,0,0,0)
+normalTab.BackgroundColor3 = BUTTON_BLUE
+normalTab.TextColor3 = Color3.fromRGB(255,255,255)
+normalTab.Text = "Normal"
+normalTab.Font = Enum.Font.GothamBold
+normalTab.TextSize = 12
+normalTab.Parent = tabFrame
+Instance.new("UICorner", normalTab).CornerRadius = UDim.new(0,6)
+
+local desyncTab = Instance.new("TextButton")
+desyncTab.Size = UDim2.new(0.5,-3,1,0)
+desyncTab.Position = UDim2.new(0.5,3,0,0)
+desyncTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
+desyncTab.TextColor3 = Color3.fromRGB(255,255,255)
+desyncTab.Text = "Desync"
+desyncTab.Font = Enum.Font.GothamBold
+desyncTab.TextSize = 12
+desyncTab.Parent = tabFrame
+Instance.new("UICorner", desyncTab).CornerRadius = UDim.new(0,6)
+
 --// BOTÓN DE ACTIVAR
 
 local activate = Instance.new("TextButton")
 
 activate.Size = UDim2.new(1,-20,0,30)
 
-activate.Position = UDim2.new(0,10,0,35)
+activate.Position = UDim2.new(0,10,0,63)
 
 activate.BackgroundColor3 = BUTTON_BLUE
 
@@ -2052,13 +2112,9 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
-
-speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
-jumpBox.Text = tostring(Config["Jump Value"])
+local speedBox, speedLabel = createRow("Speed",103,53)
+local stealBox, stealLabel = createRow("Steal Speed",138,29)
+local jumpBox, jumpLabel = createRow("Jump",173,60)
 
 --// VALUES
 
@@ -2072,9 +2128,48 @@ local speedStealValue = 28
 
 local jumpValue = 50
 
+local function getTabKeys(tab)
+    if tab == 2 then
+        return "Speed Value Desync", "Steal Speed Value Desync", "Jump Value Desync"
+    end
+    return "Speed Value Normal", "Steal Speed Value Normal", "Jump Value Normal"
+end
+
+local function syncLegacyFromTab(tab)
+    local speedKey, stealKey, jumpKey = getTabKeys(tab)
+    Config["Speed Value"] = Config[speedKey]
+    Config["Steal Speed Value"] = Config[stealKey]
+    Config["Jump Value"] = Config[jumpKey]
+end
+
+local function saveCurrentTabValues()
+    local speedKey, stealKey, jumpKey = getTabKeys(speedTab)
+    Config[speedKey] = tonumber(speedBox.Text) or Config[speedKey]
+    Config[stealKey] = tonumber(stealBox.Text) or Config[stealKey]
+    Config[jumpKey] = tonumber(jumpBox.Text) or Config[jumpKey]
+    syncLegacyFromTab(speedTab)
+    SaveConfig()
+end
+
+local function loadTabValues(tab)
+    speedTab = tab
+    Config["Speed Tab"] = tab
+
+    local speedKey, stealKey, jumpKey = getTabKeys(tab)
+    speedBox.Text = tostring(Config[speedKey] or 53)
+    stealBox.Text = tostring(Config[stealKey] or 29)
+    jumpBox.Text = tostring(Config[jumpKey] or 60)
+
+    normalTab.BackgroundColor3 = (tab == 1) and BUTTON_BLUE or Color3.fromRGB(40,40,40)
+    desyncTab.BackgroundColor3 = (tab == 2) and BUTTON_BLUE or Color3.fromRGB(40,40,40)
+
+    syncLegacyFromTab(tab)
+    SaveConfig()
+end
+
 --// SANITIZE
 
-local function applyInput(box,min,max,default,key)
+local function applyInput(box,min,max,default,getKey)
 
 box.FocusLost:Connect(function()
 
@@ -2084,16 +2179,41 @@ num = math.clamp(num,min,max)
 
 box.Text = tostring(num)
 
+local key = getKey()
 Config[key] = num
+syncLegacyFromTab(speedTab)
 SaveConfig()
 
 end)
 
 end
 
-applyInput(speedBox,15,200,53,"Speed Value")
-applyInput(stealBox,15,200,29,"Steal Speed Value")
-applyInput(jumpBox,50,200,60,"Jump Value")
+applyInput(speedBox,15,200,53,function()
+    local speedKey = getTabKeys(speedTab)
+    return speedKey
+end)
+applyInput(stealBox,15,200,29,function()
+    local _, stealKey = getTabKeys(speedTab)
+    return stealKey
+end)
+applyInput(jumpBox,50,200,60,function()
+    local _, _, jumpKey = getTabKeys(speedTab)
+    return jumpKey
+end)
+
+normalTab.MouseButton1Click:Connect(function()
+    if speedTab == 1 then return end
+    saveCurrentTabValues()
+    loadTabValues(1)
+end)
+
+desyncTab.MouseButton1Click:Connect(function()
+    if speedTab == 2 then return end
+    saveCurrentTabValues()
+    loadTabValues(2)
+end)
+
+loadTabValues(speedTab)
 
 --// BOTÓN LÓGICA 
 
@@ -2291,7 +2411,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,215)}
 )
 
 tween:Play()
@@ -2318,7 +2438,11 @@ local RunService = game:GetService("RunService")
 
 local function ApplyToggle(text, enabled)
 
-    if text == "No Walk Animation" then
+    if text == "No Walk Animation" or text == "Unwalk" then
+        Config["No Walk Animation"] = enabled
+        Config["Unwalk"] = enabled
+        SaveConfig()
+
         local char = lp.Character
         if not char then return end
 
@@ -2964,6 +3088,7 @@ topLabel.BackgroundTransparency = 1
 topLabel.Font = Enum.Font.GothamBold
 topLabel.TextSize = 14
 topLabel.TextColor3 = Color3.fromRGB(255,255,255)
+topLabel.RichText = true
 topLabel.Parent = topBar
 
 local fps, framesCount, last = 60, 0, tick()
@@ -2980,7 +3105,7 @@ RunService.RenderStepped:Connect(function()
         local dataPing = network.ServerStatsItem:FindFirstChild("Data Ping")
         if dataPing then ping = math.floor(dataPing:GetValue()) end
     end
-    topLabel.Text = "TyriqHubDuels | FPS "..fps.." | PING "..ping.." ms"
+    topLabel.Text = "<font color=\"#0078FF\">TyriqHubDuels</font> | FPS "..fps.." | PING "..ping.." ms"
 end)
 
 -- BOTÓN ABRIR Y CERRAR GUI
@@ -4449,7 +4574,7 @@ end
 local combatFuncs = {"Melee Aimbot","Instant Grab","TP Down","Auto Play","Drop Brainrot","Lock Target","Auto Medusa","Auto Bat","Fling","Manual TP","Auto Exit Duel"}
 for _,f in ipairs(combatFuncs) do CreateToggle("Combat",f) end
 
-local playerFuncs = {"Speed Customizer","No Walk Animation","Anti Ragdoll","Spin Body","Infinite Jump","Super Jump","No Player Collision"}
+local playerFuncs = {"Speed Customizer","No Walk Animation","Unwalk","Anti Ragdoll","Spin Body","Infinite Jump","Super Jump","No Player Collision"}
 for _,f in ipairs(playerFuncs) do CreateToggle("Player",f) end
 
 local visualFuncs = {"ESP Players","Xray Base","Optimizer","Anti FPS Devourer","No Camera Collision","FOV"}
@@ -4789,7 +4914,11 @@ elseif text == "Lock UI" then
         end
     end
 
-elseif text == "No Walk Animation" then
+elseif text == "No Walk Animation" or text == "Unwalk" then
+
+    Config["No Walk Animation"] = enabled
+    Config["Unwalk"] = enabled
+    SaveConfig()
 
     if enabled then
 
