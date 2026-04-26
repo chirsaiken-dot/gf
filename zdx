@@ -3167,6 +3167,9 @@ local lockHbConn
 local lockLv, lockAtt, lockGyro
 local lockEnabled = false
 local currentTarget = nil
+local LOCK_BASE_HEIGHT = 3
+local LOCK_FLOAT_STUDS = 6
+local LOCK_FLOAT_SPEED = 2.5
 
 local function getNearest()
 	local char = lp.Character
@@ -3219,15 +3222,27 @@ local function startLock()
 	if not char then return end
 
 	local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
 	if not hrp then return end
+    if not hum then return end
 
 	lockAtt = Instance.new("Attachment", hrp)
 
 	lockLv = Instance.new("LinearVelocity", hrp)
 	lockLv.Attachment0 = lockAtt
-	lockLv.MaxForce = 50000
+    lockLv.MaxForce = 200000
 	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
 	lockLv.Enabled = false
+
+    lockGyro = Instance.new("AlignOrientation", hrp)
+    lockGyro.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    lockGyro.Attachment0 = lockAtt
+    lockGyro.RigidityEnabled = true
+    lockGyro.MaxTorque = 100000
+    lockGyro.Responsiveness = 200
+    lockGyro.Enabled = false
+
+    hum.AutoRotate = false
 
 	lockHbConn = RunService.Heartbeat:Connect(function()
 
@@ -3238,35 +3253,38 @@ local function startLock()
 		local targetPlayer = currentTarget
 		if not targetPlayer then
 			lockLv.Enabled = false
+            lockGyro.Enabled = false
 			return
 		end
 
 		local tChar = targetPlayer.Character
 		local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+        local tHead = tChar and tChar:FindFirstChild("Head")
+        local anchorPart = tHead or tHrp
 
-		if not tHrp then
+        if not anchorPart then
 			currentTarget = nil
 			lockLv.Enabled = false
+            lockGyro.Enabled = false
 			return
 		end
 
 		lockLv.Enabled = true
+        lockGyro.Enabled = true
 
-		-- 🔥 DIRECTO AL CUERPO (SIN PREDICCIÓN)
-		local targetPos = tHrp.Position
+        -- Hover above target head and oscillate 6 studs up/down.
+        local floatOffset = LOCK_BASE_HEIGHT + ((math.sin(tick() * LOCK_FLOAT_SPEED) + 1) * 0.5) * LOCK_FLOAT_STUDS
+        local hoverPos = anchorPart.Position + Vector3.new(0, floatOffset, 0)
+        local dir = hoverPos - hrp.Position
 
-		local dir = targetPos - hrp.Position
-		local distance = dir.Magnitude
+        if dir.Magnitude > 0.05 then
+            lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
+        else
+            lockLv.VectorVelocity = Vector3.zero
+        end
 
-		local stopDistance = 1.2
-
-		if distance > stopDistance then
-			-- ir directo al target
-			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
-		else
-			-- 🧲 pegarse (copiar velocidad)
-			lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity * 1.05
-		end
+        -- Force facing down while locked.
+        lockGyro.CFrame = CFrame.lookAt(hrp.Position, hrp.Position - Vector3.new(0, 1, 0), anchorPart.CFrame.LookVector)
 
 	end)
 
@@ -3287,10 +3305,21 @@ local function stopLock()
 		lockLv = nil
 	end
 
+    if lockGyro then
+        lockGyro:Destroy()
+        lockGyro = nil
+    end
+
 	if lockAtt then
 		lockAtt:Destroy()
 		lockAtt = nil
 	end
+
+    local char = lp.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.AutoRotate = true
+    end
 
 end
 
