@@ -5,6 +5,7 @@
 local noWalkConnection1
 local noWalkConnection2
 local lastPos
+local desyncActive = false
 
 local fovConnection = nil
 local oldFOV = nil
@@ -106,6 +107,15 @@ local Config = {
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
     ["Jump Value"] = 60,
+
+    -- SPEED CUSTOMIZER PROFILES
+    ["Speed Tab Selected"] = "Normal",
+    ["Speed Normal Value"] = 53,
+    ["Steal Speed Normal Value"] = 29,
+    ["Jump Normal Value"] = 60,
+    ["Speed Desync Value"] = 53,
+    ["Steal Speed Desync Value"] = 29,
+    ["Jump Desync Value"] = 60,
 
     ["AutoPlay Speed"] = 51,
     ["AutoPlay StealSpeed"] = 29,
@@ -1884,7 +1894,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,215)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -2052,13 +2062,104 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
+local selectedSpeedTab = (Config["Speed Tab Selected"] == "Desync") and "Desync" or "Normal"
 
-speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
-jumpBox.Text = tostring(Config["Jump Value"])
+local function tabKeys(tab)
+    if tab == "Desync" then
+        return "Speed Desync Value", "Steal Speed Desync Value", "Jump Desync Value"
+    end
+    return "Speed Normal Value", "Steal Speed Normal Value", "Jump Normal Value"
+end
+
+local tabsFrame = Instance.new("Frame")
+tabsFrame.Size = UDim2.new(1,-20,0,26)
+tabsFrame.Position = UDim2.new(0,10,0,70)
+tabsFrame.BackgroundTransparency = 1
+tabsFrame.Parent = main
+
+local tabNormal = Instance.new("TextButton")
+tabNormal.Size = UDim2.new(0.48,0,1,0)
+tabNormal.Position = UDim2.new(0,0,0,0)
+tabNormal.BackgroundColor3 = BUTTON_BLUE
+tabNormal.Text = "Tab 1 - Normal"
+tabNormal.Font = Enum.Font.GothamBold
+tabNormal.TextSize = 12
+tabNormal.TextColor3 = Color3.new(1,1,1)
+tabNormal.Parent = tabsFrame
+Instance.new("UICorner", tabNormal).CornerRadius = UDim.new(0,6)
+
+local tabDesync = Instance.new("TextButton")
+tabDesync.Size = UDim2.new(0.48,0,1,0)
+tabDesync.Position = UDim2.new(0.52,0,0,0)
+tabDesync.BackgroundColor3 = BUTTON_BLUE
+tabDesync.Text = "Tab 2 - Desync"
+tabDesync.Font = Enum.Font.GothamBold
+tabDesync.TextSize = 12
+tabDesync.TextColor3 = Color3.new(1,1,1)
+tabDesync.Parent = tabsFrame
+Instance.new("UICorner", tabDesync).CornerRadius = UDim.new(0,6)
+
+local speedBox, speedLabel = createRow("Speed",105,53)
+local stealBox, stealLabel = createRow("Steal Speed",140,29)
+local jumpBox, jumpLabel = createRow("Jump",175,60)
+
+local function setTabVisuals()
+    tabNormal.BackgroundTransparency = (selectedSpeedTab == "Normal") and 0 or 0.45
+    tabDesync.BackgroundTransparency = (selectedSpeedTab == "Desync") and 0 or 0.45
+end
+
+local function loadTabToBoxes(tab)
+    local speedKey, stealKey, jumpKey = tabKeys(tab)
+    speedBox.Text = tostring(Config[speedKey])
+    stealBox.Text = tostring(Config[stealKey])
+    jumpBox.Text = tostring(Config[jumpKey])
+end
+
+local function saveCurrentTabFromBoxes()
+    local speedKey, stealKey, jumpKey = tabKeys(selectedSpeedTab)
+
+    local speedNum = math.clamp(tonumber(speedBox.Text) or 53, 15, 200)
+    local stealNum = math.clamp(tonumber(stealBox.Text) or 29, 15, 200)
+    local jumpNum = math.clamp(tonumber(jumpBox.Text) or 60, 50, 200)
+
+    speedBox.Text = tostring(speedNum)
+    stealBox.Text = tostring(stealNum)
+    jumpBox.Text = tostring(jumpNum)
+
+    Config[speedKey] = speedNum
+    Config[stealKey] = stealNum
+    Config[jumpKey] = jumpNum
+
+    -- Keep legacy keys synced for normal profile compatibility.
+    if selectedSpeedTab == "Normal" then
+        Config["Speed Value"] = speedNum
+        Config["Steal Speed Value"] = stealNum
+        Config["Jump Value"] = jumpNum
+    end
+
+    SaveConfig()
+end
+
+local function switchSpeedTab(tab)
+    if selectedSpeedTab == tab then return end
+    saveCurrentTabFromBoxes()
+    selectedSpeedTab = tab
+    Config["Speed Tab Selected"] = selectedSpeedTab
+    SaveConfig()
+    loadTabToBoxes(selectedSpeedTab)
+    setTabVisuals()
+end
+
+tabNormal.MouseButton1Click:Connect(function()
+    switchSpeedTab("Normal")
+end)
+
+tabDesync.MouseButton1Click:Connect(function()
+    switchSpeedTab("Desync")
+end)
+
+loadTabToBoxes(selectedSpeedTab)
+setTabVisuals()
 
 --// VALUES
 
@@ -2072,6 +2173,17 @@ local speedStealValue = 28
 
 local jumpValue = 50
 
+local function getActiveProfileValues()
+    local activeTab = desyncActive and "Desync" or "Normal"
+    local speedKey, stealKey, jumpKey = tabKeys(activeTab)
+
+    local speedNum = tonumber(Config[speedKey]) or 53
+    local stealNum = tonumber(Config[stealKey]) or 29
+    local jumpNum = tonumber(Config[jumpKey]) or 60
+
+    return speedNum, stealNum, jumpNum
+end
+
 --// SANITIZE
 
 local function applyInput(box,min,max,default,key)
@@ -2084,8 +2196,7 @@ num = math.clamp(num,min,max)
 
 box.Text = tostring(num)
 
-Config[key] = num
-SaveConfig()
+saveCurrentTabFromBoxes()
 
 end)
 
@@ -2114,11 +2225,7 @@ SaveConfig()
 
             if character and hrp and hum then
 
-                speedNoStealValue = tonumber(speedBox.Text) or 53
-
-                speedStealValue = tonumber(stealBox.Text) or 29
-
-                jumpValue = tonumber(jumpBox.Text) or 60
+                speedNoStealValue, speedStealValue, jumpValue = getActiveProfileValues()
 
                 local moveDirection = hum.MoveDirection
 
@@ -2172,9 +2279,7 @@ if Config["Speed Enabled"] then
 
         if character and hrp and hum then
 
-            speedNoStealValue = tonumber(speedBox.Text) or 53
-            speedStealValue = tonumber(stealBox.Text) or 29
-            jumpValue = tonumber(jumpBox.Text) or 60
+            speedNoStealValue, speedStealValue, jumpValue = getActiveProfileValues()
 
             local moveDirection = hum.MoveDirection
 
@@ -2217,7 +2322,8 @@ UserInputService.JumpRequest:Connect(function()
         if state == Enum.HumanoidStateType.Running 
         or state == Enum.HumanoidStateType.Landed then
 
-            local jumpPower = tonumber(jumpBox.Text) or 70
+            local _, _, savedJump = getActiveProfileValues()
+            local jumpPower = savedJump or 70
 
             hrp.AssemblyLinearVelocity = Vector3.new(
                 hrp.AssemblyLinearVelocity.X,
@@ -2247,7 +2353,8 @@ stealBox,
 jumpBox,
 speedLabel,
 stealLabel,
-jumpLabel
+jumpLabel,
+tabsFrame
 }
 
 if Config["Speed Minimized"] then
@@ -2291,7 +2398,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,215)}
 )
 
 tween:Play()
@@ -4390,6 +4497,7 @@ local enabled = false
 button.MouseButton1Click:Connect(function()  
 
 enabled = not enabled  
+desyncActive = enabled
 
 if enabled then  
 
