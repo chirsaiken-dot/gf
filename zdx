@@ -3350,27 +3350,35 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-        -- tracking OP: copia altura del target y responde a subidas/bajadas rapido
+        -- bat aimbot OP: copiar altura del target en vivo (sube/baja) y aplicar trick vertical
         local targetVelocity = tHrp.AssemblyLinearVelocity
-        local copyHeight = math.clamp(targetVelocity.Y * 0.24, -8, 10)
-        local trickDownOffset = (targetVelocity.Y < -2) and -2.5 or 0
-        local hoverY = 2 + math.sin(tick() * 4.0) * 2
-        local targetPos = tHead.Position + Vector3.new(0, hoverY + copyHeight + trickDownOffset, 0)
+        local copyHeightY = tHead.Position.Y
+        local verticalLead = math.clamp(targetVelocity.Y * 0.24, -10, 12)
+        local trickDownBias = (targetVelocity.Y < -2) and -1.75 or 0
+        local targetPos = Vector3.new(
+            tHead.Position.X,
+            copyHeightY + verticalLead + trickDownBias,
+            tHead.Position.Z
+        )
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
 
         local stopDistance = 0.75
 
-		if distance > stopDistance then
-			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
+        if distance > stopDistance then
+            lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
 		else
-            lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
+            lockLv.VectorVelocity = Vector3.new(
+                tHrp.AssemblyLinearVelocity.X,
+                math.clamp(tHrp.AssemblyLinearVelocity.Y, -35, 35),
+                tHrp.AssemblyLinearVelocity.Z
+            )
 		end
 
-        -- trick TP down: cuando el target sube fuerte, bajas mas para engañar
-        if tHrp.AssemblyLinearVelocity.Y > 6 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
-            hrp.CFrame = hrp.CFrame * CFrame.new(0, -8, 0)
+        -- trick TP down: si el target sube fuerte, te baja rapido para desync visual
+        if tHrp.AssemblyLinearVelocity.Y > 8 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
+            hrp.CFrame = hrp.CFrame * CFrame.new(0, -6, 0)
             lastTpTrick = tick()
         end
 
