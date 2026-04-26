@@ -15,8 +15,8 @@ local TweenService = game:GetService("TweenService")
 
 local HttpService = game:GetService("HttpService")
 
-local FolderName = "67 Hub"
-local FileName = FolderName.."/67config.json"
+local FolderName = "Tyriq Hub"
+local FileName = FolderName.."/tyriqconfig.json"
 
 local Config = {
 
@@ -2840,7 +2840,7 @@ task.wait(1)
 -- SCREEN GUI
 --////////////////////////////////////////////////////
 local sg = Instance.new("ScreenGui")
-sg.Name = "67Hub"
+sg.Name = "TyriqHub"
 sg.ResetOnSpawn = false
 sg.Parent = lp:WaitForChild("PlayerGui")
 
@@ -2979,7 +2979,7 @@ RunService.RenderStepped:Connect(function()
         local dataPing = network.ServerStatsItem:FindFirstChild("Data Ping")
         if dataPing then ping = math.floor(dataPing:GetValue()) end
     end
-    topLabel.Text = "67HubDuels | FPS "..fps.." | PING "..ping.." ms"
+    topLabel.Text = "TyriqHubDuels | FPS "..fps.." | PING "..ping.." ms"
 end)
 
 -- BOTÓN ABRIR Y CERRAR GUI
@@ -3038,7 +3038,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 20
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Text = "67 Hub"
+title.Text = "Tyriq Hub"
 title.Parent = hub
 
 local discordLabel = Instance.new("TextButton")
@@ -4022,7 +4022,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-					Players.LocalPlayer:Kick("67 HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
 				end
 
 			end)
@@ -4984,7 +4984,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-					Players.LocalPlayer:Kick("67 HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
 				end
 
 			end)
@@ -5293,7 +5293,7 @@ task.spawn(function()
 
             task.spawn(function()
                 while tauntActive do
-                    sendMessage("/67 On Top")
+                    sendMessage("/Tyriq Hub On Top")
                     task.wait(1)
                 end
             end)
