@@ -3229,14 +3229,6 @@ local function startLock()
 	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
 	lockLv.Enabled = false
 
-    lockGyro = Instance.new("AlignOrientation", hrp)
-    lockGyro.Attachment0 = lockAtt
-    lockGyro.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    lockGyro.RigidityEnabled = true
-    lockGyro.MaxTorque = 100000
-    lockGyro.Responsiveness = 200
-    lockGyro.Enabled = false
-
 	lockHbConn = RunService.Heartbeat:Connect(function()
 
 		if not currentTarget then
@@ -3246,45 +3238,35 @@ local function startLock()
 		local targetPlayer = currentTarget
 		if not targetPlayer then
 			lockLv.Enabled = false
-            if lockGyro then
-                lockGyro.Enabled = false
-            end
 			return
 		end
 
 		local tChar = targetPlayer.Character
 		local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
-        local tHead = tChar and tChar:FindFirstChild("Head")
 
-        if not (tHrp and tHead) then
+		if not tHrp then
 			currentTarget = nil
 			lockLv.Enabled = false
-            if lockGyro then
-                lockGyro.Enabled = false
-            end
 			return
 		end
 
 		lockLv.Enabled = true
-        if lockGyro then
-            lockGyro.Enabled = true
-            -- Face down while floating over the target.
-            lockGyro.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(-math.pi / 2, 0, 0)
-        end
 
-        -- Hover above the target head with a 6-stud up/down cycle.
-        local floatOffset = 3 + math.sin(tick() * 2.8) * 3
-        local targetPos = tHead.Position + Vector3.new(0, 2 + floatOffset, 0)
+		-- 🔥 DIRECTO AL CUERPO (SIN PREDICCIÓN)
+		local targetPos = tHrp.Position
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
-        local desiredVel = tHrp.AssemblyLinearVelocity * 0.35
 
-        if distance > 0.35 then
-            desiredVel += dir.Unit * math.min(LOCK_SPEED, distance * 8)
-        end
+		local stopDistance = 1.2
 
-        lockLv.VectorVelocity = desiredVel
+		if distance > stopDistance then
+			-- ir directo al target
+			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
+		else
+			-- 🧲 pegarse (copiar velocidad)
+			lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity * 1.05
+		end
 
 	end)
 
@@ -3304,11 +3286,6 @@ local function stopLock()
 		lockLv:Destroy()
 		lockLv = nil
 	end
-
-    if lockGyro then
-        lockGyro:Destroy()
-        lockGyro = nil
-    end
 
 	if lockAtt then
 		lockAtt:Destroy()
