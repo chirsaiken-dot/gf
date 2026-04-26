@@ -10,7 +10,6 @@ local fovConnection = nil
 local oldFOV = nil
 
 local TweenService = game:GetService("TweenService")
-local BUTTON_BLUE = Color3.fromRGB(0, 120, 255)
  
 --// ORRXL4 HUB CONFIG SYSTEM
 
@@ -39,7 +38,6 @@ local Config = {
     ["Xray Base"] = false,
     ["ESP Players"] = false,
     ["No Walk Animation"] = false,
-    ["Unwalk"] = false,
     ["Auto Bat"] = false,
     ["Lock Target"] = false,
     ["Auto Medusa"] = false,
@@ -107,13 +105,6 @@ local Config = {
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
     ["Jump Value"] = 60,
-    ["Speed Tab"] = 1,
-    ["Speed Value Normal"] = 53,
-    ["Steal Speed Value Normal"] = 29,
-    ["Jump Value Normal"] = 60,
-    ["Speed Value Desync"] = 53,
-    ["Steal Speed Value Desync"] = 29,
-    ["Jump Value Desync"] = 60,
 
     ["AutoPlay Speed"] = 51,
     ["AutoPlay StealSpeed"] = 29,
@@ -638,7 +629,7 @@ function CreateTPButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = BUTTON_BLUE
+    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
     button.Parent = tpGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -672,13 +663,13 @@ function CreateTPButton()
         if debounce then return end
 
         debounce = true
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
 
         doTP()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
         debounce = false
 
     end)
@@ -1032,7 +1023,7 @@ dragHandle.Parent = main
 local playButton = Instance.new("TextButton")
 playButton.Size = UDim2.new(0,180,0,34)
 playButton.Position = UDim2.new(0.5,-90,0,30)
-playButton.BackgroundColor3 = BUTTON_BLUE
+playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
 playButton.Text = "Play"
 playButton.TextColor3 = Color3.fromRGB(255,255,255)
 playButton.TextSize = 14
@@ -1536,7 +1527,7 @@ end
 local function resetPlayButton()
     routeRunning = false
     playButton.Text = "Play"
-    playButton.BackgroundColor3 = BUTTON_BLUE
+    playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
 end
 
 local function walkRoute(route)
@@ -1604,12 +1595,12 @@ local function walkRoute(route)
 
     if activeRoute == routes.START_A then
         leftEnabled = false
-        leftButton.BackgroundColor3 = BUTTON_BLUE
+        leftButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
     end
 
     if activeRoute == routes.START_B then
         rightEnabled = false
-        rightButton.BackgroundColor3 = BUTTON_BLUE
+        rightButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
     end
 
     selectedRoute = nil
@@ -1631,7 +1622,7 @@ playButton.MouseButton1Click:Connect(function()
         currentRouteId += 1
 
         playButton.Text = "Play"
-        playButton.BackgroundColor3 = BUTTON_BLUE
+        playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
         clearAutoWalkParts()
         return
@@ -1654,7 +1645,7 @@ playButton.MouseButton1Click:Connect(function()
         currentRouteId += 1
 routeRunning = true
         playButton.Text = "STOP"
-        playButton.BackgroundColor3 = BUTTON_BLUE
+        playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
         if not routeRunning then
     loadRouteToTextboxes(route)
@@ -1674,7 +1665,7 @@ task.spawn(function()
     end
 
     playButton.Text = "Play"
-    playButton.BackgroundColor3 = BUTTON_BLUE
+    playButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
 end)
     end
@@ -1892,7 +1883,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,215)
+main.Size = UDim2.new(0,200,0,185)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1978,67 +1969,15 @@ minimizeButton.TextColor3 = title.TextColor3
 minimizeButton.BorderSizePixel = 0
 minimizeButton.Parent = main
 
-local speedTab = tonumber(Config["Speed Tab"]) or 1
-if speedTab ~= 2 then
-    speedTab = 1
-end
-
-if Config["Speed Value Normal"] == nil then
-    Config["Speed Value Normal"] = Config["Speed Value"] or 53
-end
-if Config["Steal Speed Value Normal"] == nil then
-    Config["Steal Speed Value Normal"] = Config["Steal Speed Value"] or 29
-end
-if Config["Jump Value Normal"] == nil then
-    Config["Jump Value Normal"] = Config["Jump Value"] or 60
-end
-if Config["Speed Value Desync"] == nil then
-    Config["Speed Value Desync"] = Config["Speed Value"] or 53
-end
-if Config["Steal Speed Value Desync"] == nil then
-    Config["Steal Speed Value Desync"] = Config["Steal Speed Value"] or 29
-end
-if Config["Jump Value Desync"] == nil then
-    Config["Jump Value Desync"] = Config["Jump Value"] or 60
-end
-
-local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1,-20,0,24)
-tabFrame.Position = UDim2.new(0,10,0,35)
-tabFrame.BackgroundTransparency = 1
-tabFrame.Parent = main
-
-local normalTab = Instance.new("TextButton")
-normalTab.Size = UDim2.new(0.5,-3,1,0)
-normalTab.Position = UDim2.new(0,0,0,0)
-normalTab.BackgroundColor3 = BUTTON_BLUE
-normalTab.TextColor3 = Color3.fromRGB(255,255,255)
-normalTab.Text = "Normal"
-normalTab.Font = Enum.Font.GothamBold
-normalTab.TextSize = 12
-normalTab.Parent = tabFrame
-Instance.new("UICorner", normalTab).CornerRadius = UDim.new(0,6)
-
-local desyncTab = Instance.new("TextButton")
-desyncTab.Size = UDim2.new(0.5,-3,1,0)
-desyncTab.Position = UDim2.new(0.5,3,0,0)
-desyncTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
-desyncTab.TextColor3 = Color3.fromRGB(255,255,255)
-desyncTab.Text = "Desync"
-desyncTab.Font = Enum.Font.GothamBold
-desyncTab.TextSize = 12
-desyncTab.Parent = tabFrame
-Instance.new("UICorner", desyncTab).CornerRadius = UDim.new(0,6)
-
 --// BOTÓN DE ACTIVAR
 
 local activate = Instance.new("TextButton")
 
 activate.Size = UDim2.new(1,-20,0,30)
 
-activate.Position = UDim2.new(0,10,0,63)
+activate.Position = UDim2.new(0,10,0,35)
 
-activate.BackgroundColor3 = BUTTON_BLUE
+activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
 activate.TextColor3 = Color3.fromRGB(255,255,255)
 
@@ -2112,9 +2051,13 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",103,53)
-local stealBox, stealLabel = createRow("Steal Speed",138,29)
-local jumpBox, jumpLabel = createRow("Jump",173,60)
+local speedBox, speedLabel = createRow("Speed",75,53)
+local stealBox, stealLabel = createRow("Steal Speed",110,29)
+local jumpBox, jumpLabel = createRow("Jump",145,60)
+
+speedBox.Text = tostring(Config["Speed Value"])
+stealBox.Text = tostring(Config["Steal Speed Value"])
+jumpBox.Text = tostring(Config["Jump Value"])
 
 --// VALUES
 
@@ -2128,48 +2071,9 @@ local speedStealValue = 28
 
 local jumpValue = 50
 
-local function getTabKeys(tab)
-    if tab == 2 then
-        return "Speed Value Desync", "Steal Speed Value Desync", "Jump Value Desync"
-    end
-    return "Speed Value Normal", "Steal Speed Value Normal", "Jump Value Normal"
-end
-
-local function syncLegacyFromTab(tab)
-    local speedKey, stealKey, jumpKey = getTabKeys(tab)
-    Config["Speed Value"] = Config[speedKey]
-    Config["Steal Speed Value"] = Config[stealKey]
-    Config["Jump Value"] = Config[jumpKey]
-end
-
-local function saveCurrentTabValues()
-    local speedKey, stealKey, jumpKey = getTabKeys(speedTab)
-    Config[speedKey] = tonumber(speedBox.Text) or Config[speedKey]
-    Config[stealKey] = tonumber(stealBox.Text) or Config[stealKey]
-    Config[jumpKey] = tonumber(jumpBox.Text) or Config[jumpKey]
-    syncLegacyFromTab(speedTab)
-    SaveConfig()
-end
-
-local function loadTabValues(tab)
-    speedTab = tab
-    Config["Speed Tab"] = tab
-
-    local speedKey, stealKey, jumpKey = getTabKeys(tab)
-    speedBox.Text = tostring(Config[speedKey] or 53)
-    stealBox.Text = tostring(Config[stealKey] or 29)
-    jumpBox.Text = tostring(Config[jumpKey] or 60)
-
-    normalTab.BackgroundColor3 = (tab == 1) and BUTTON_BLUE or Color3.fromRGB(40,40,40)
-    desyncTab.BackgroundColor3 = (tab == 2) and BUTTON_BLUE or Color3.fromRGB(40,40,40)
-
-    syncLegacyFromTab(tab)
-    SaveConfig()
-end
-
 --// SANITIZE
 
-local function applyInput(box,min,max,default,getKey)
+local function applyInput(box,min,max,default,key)
 
 box.FocusLost:Connect(function()
 
@@ -2179,41 +2083,16 @@ num = math.clamp(num,min,max)
 
 box.Text = tostring(num)
 
-local key = getKey()
 Config[key] = num
-syncLegacyFromTab(speedTab)
 SaveConfig()
 
 end)
 
 end
 
-applyInput(speedBox,15,200,53,function()
-    local speedKey = getTabKeys(speedTab)
-    return speedKey
-end)
-applyInput(stealBox,15,200,29,function()
-    local _, stealKey = getTabKeys(speedTab)
-    return stealKey
-end)
-applyInput(jumpBox,50,200,60,function()
-    local _, _, jumpKey = getTabKeys(speedTab)
-    return jumpKey
-end)
-
-normalTab.MouseButton1Click:Connect(function()
-    if speedTab == 1 then return end
-    saveCurrentTabValues()
-    loadTabValues(1)
-end)
-
-desyncTab.MouseButton1Click:Connect(function()
-    if speedTab == 2 then return end
-    saveCurrentTabValues()
-    loadTabValues(2)
-end)
-
-loadTabValues(speedTab)
+applyInput(speedBox,15,200,53,"Speed Value")
+applyInput(stealBox,15,200,29,"Steal Speed Value")
+applyInput(jumpBox,50,200,60,"Jump Value")
 
 --// BOTÓN LÓGICA 
 
@@ -2228,7 +2107,7 @@ SaveConfig()
 
         activate.Text = "ON"
 
-        activate.BackgroundColor3 = BUTTON_BLUE
+        activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
         speedConnection = RunService.Heartbeat:Connect(function()
 
@@ -2268,7 +2147,7 @@ SaveConfig()
 
         activate.Text = "OFF"
 
-        activate.BackgroundColor3 = BUTTON_BLUE
+        activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
         if speedConnection then
 
@@ -2286,7 +2165,7 @@ if Config["Speed Enabled"] then
 
     active = true
     activate.Text = "ON"
-    activate.BackgroundColor3 = BUTTON_BLUE
+    activate.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
     speedConnection = RunService.Heartbeat:Connect(function()
 
@@ -2411,7 +2290,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,215)}
+{Size = UDim2.new(0,200,0,185)}
 )
 
 tween:Play()
@@ -2438,11 +2317,7 @@ local RunService = game:GetService("RunService")
 
 local function ApplyToggle(text, enabled)
 
-    if text == "No Walk Animation" or text == "Unwalk" then
-        Config["No Walk Animation"] = enabled
-        Config["Unwalk"] = enabled
-        SaveConfig()
-
+    if text == "No Walk Animation" then
         local char = lp.Character
         if not char then return end
 
@@ -2753,7 +2628,7 @@ local function createDropButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = BUTTON_BLUE
+    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
     button.Parent = dropGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -2783,13 +2658,13 @@ local function createDropButton()
         if debounce then return end
         debounce = true
 
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
 
         doDrop()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
         debounce = false
 
     end)
@@ -2859,7 +2734,7 @@ end)
 
         if spinActive then
             button.Text = "SPINNING"
-            button.BackgroundColor3 = BUTTON_BLUE
+            button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
             startSpinBody()
         else
             button.Text = "SPIN"
@@ -2900,7 +2775,7 @@ function createFlingGui()
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = BUTTON_BLUE
+    btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
     btn.Parent = flingGui
 
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
@@ -2932,13 +2807,13 @@ end)
         if flingActive then
 
             btn.Text = "FLING ON"
-            btn.BackgroundColor3 = BUTTON_BLUE
+            btn.BackgroundColor3 = Color3.fromRGB(200,0,0)
             startFling()
 
         else
 
             btn.Text = "FLING"
-            btn.BackgroundColor3 = BUTTON_BLUE
+            btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
             stopFling()
 
         end
@@ -3088,7 +2963,6 @@ topLabel.BackgroundTransparency = 1
 topLabel.Font = Enum.Font.GothamBold
 topLabel.TextSize = 14
 topLabel.TextColor3 = Color3.fromRGB(255,255,255)
-topLabel.RichText = true
 topLabel.Parent = topBar
 
 local fps, framesCount, last = 60, 0, tick()
@@ -3105,7 +2979,7 @@ RunService.RenderStepped:Connect(function()
         local dataPing = network.ServerStatsItem:FindFirstChild("Data Ping")
         if dataPing then ping = math.floor(dataPing:GetValue()) end
     end
-    topLabel.Text = "<font color=\"#0078FF\">TyriqHubDuels</font> | FPS "..fps.." | PING "..ping.." ms"
+    topLabel.Text = "TyriqHubDuels | FPS "..fps.." | PING "..ping.." ms"
 end)
 
 -- BOTÓN ABRIR Y CERRAR GUI
@@ -3117,7 +2991,7 @@ toggleBtn.Position = UDim2.new(
     Config["Toggle Button Y"],
     Config["Toggle Button OffsetY"]
 )
-toggleBtn.BackgroundColor3 = BUTTON_BLUE
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
 toggleBtn.Text = "≡"
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 38
@@ -3157,7 +3031,7 @@ strokeHub.Color = Color3.fromRGB(255,255,255)
 strokeHub.Thickness = 2
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,-24,0,40)
+title.Size = UDim2.new(0.55,0,0,40)
 title.Position = UDim2.new(0,12,0,8)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
@@ -3166,6 +3040,19 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Text = "Tyriq Hub"
 title.Parent = hub
+
+local discordLabel = Instance.new("TextButton")
+discordLabel.Size = UDim2.new(0.4,0,0,40)
+discordLabel.Position = UDim2.new(0.50,6,0,8)
+discordLabel.BackgroundTransparency = 1
+discordLabel.TextColor3 = Color3.fromRGB(180,180,180)
+discordLabel.TextSize = 12
+discordLabel.Font = Enum.Font.Gotham
+discordLabel.Text = "https://discord.gg/5WjWu7JYz"
+discordLabel.Parent = hub
+discordLabel.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/5WjWu7JYz")
+end)
 
 -- AUTO STEAL NEAREST
 autoStealEnabled = false
@@ -3439,7 +3326,7 @@ function createLockGui()
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
 	btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = BUTTON_BLUE
+	btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
 	btn.Parent = lockGui
 
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
@@ -3478,7 +3365,7 @@ btn.MouseButton1Click:Connect(function()
 
 	if lockEnabled then
 		btn.Text = "LOCKED"
-        btn.BackgroundColor3 = BUTTON_BLUE
+		btn.BackgroundColor3 = Color3.fromRGB(200,0,0)
 		startLock()
 	else
 		btn.Text = "LOCK"
@@ -3660,7 +3547,7 @@ function CreateTPDownButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = BUTTON_BLUE
+    button.BackgroundColor3 = Color3.fromRGB(25,25,25)
     button.Parent = tpDownGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -3690,13 +3577,13 @@ end)
         if tpDownDebounce then return end
         tpDownDebounce = true
 
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(200,0,0)
 
         doTPDown()
 
         task.wait(0.2)
 
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(25,25,25)
         tpDownDebounce = false
 
     end)
@@ -3748,9 +3635,9 @@ end
 local function ShowSection(sectionName)
     for _,frame in pairs(frames) do frame.Visible = false end
     frames[sectionName].Visible = true
-    for _,b in pairs(sectionButtons) do b.BackgroundColor3 = BUTTON_BLUE end
+    for _,b in pairs(sectionButtons) do b.BackgroundColor3 = Color3.fromRGB(10,10,10) end
     for _,b in pairs(sectionButtons) do
-        if b.Text == sectionName then b.BackgroundColor3 = BUTTON_BLUE end
+        if b.Text == sectionName then b.BackgroundColor3 = Color3.fromRGB(0,120,255) end
     end
 end
 
@@ -3758,7 +3645,7 @@ for i,v in ipairs(sections) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, sectionWidth,0,28)
     btn.Position = UDim2.new(0,startX + (i-1)*(sectionWidth+spacing),0,sectionY)
-    btn.BackgroundColor3 = BUTTON_BLUE
+    btn.BackgroundColor3 = Color3.fromRGB(10,10,10)
     btn.Text = v
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 13
@@ -3847,7 +3734,7 @@ radioTextbox = textbox
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0,50,0,22)
     button.Position = UDim2.new(1,-60,0.5,-11)
-    button.BackgroundColor3 = BUTTON_BLUE
+    button.BackgroundColor3 = Color3.fromRGB(50,50,50)
     button.Text = ""
     button.Parent = container
     Instance.new("UICorner", button).CornerRadius = UDim.new(1,0)
@@ -3864,11 +3751,11 @@ radioTextbox = textbox
 -- Aplicar estado visual al cargar
 task.defer(function()
     if enabled then
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(0,120,255)
         circle.Position = UDim2.new(1,-20,0.5,-9)
 
     else
-        button.BackgroundColor3 = BUTTON_BLUE
+        button.BackgroundColor3 = Color3.fromRGB(50,50,50)
         circle.Position = UDim2.new(0,2,0.5,-9)
     end
 end)
@@ -3876,10 +3763,10 @@ end)
     button.MouseButton1Click:Connect(function()
         enabled = not enabled
         if enabled then
-            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = BUTTON_BLUE}):Play()
+            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(0,120,255)}):Play()
             TweenService:Create(circle, TweenInfo.new(0.25), {Position = UDim2.new(1,-20,0.5,-9)}):Play()
         else
-            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = BUTTON_BLUE}):Play()
+            TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(50,50,50)}):Play()
             TweenService:Create(circle, TweenInfo.new(0.25), {Position = UDim2.new(0,2,0.5,-9)}):Play()
         end
 
@@ -4434,7 +4321,7 @@ end
     end)
 end
 
---// DESYNC
+--// DELTA DESYNC (LAGBACK)
 
 do
 local parentFrame = frames["Combat"]
@@ -4507,7 +4394,7 @@ button.BackgroundTransparency = 1
 button.Font = Enum.Font.GothamBold  
 button.TextSize = 15  
 button.TextColor3 = Color3.fromRGB(255,255,255)  
-button.Text = "Desync : OFF"  
+button.Text = "Delta Desync (Lagback) : OFF"  
 button.Parent = container  
 
 local enabled = false  
@@ -4541,7 +4428,7 @@ if enabled then
         end
     end
 
-    button.Text = "Desync : ON"  
+    button.Text = "Delta Desync (Lagback) : ON"  
 
 else  
 
@@ -4550,7 +4437,7 @@ else
     -- ❌ DESACTIVAR SERVER POS
     disableServerPos()
 
-    button.Text = "Desync : OFF"  
+    button.Text = "Delta Desync (Lagback) : OFF"  
 
 end
 
@@ -4574,7 +4461,7 @@ end
 local combatFuncs = {"Melee Aimbot","Instant Grab","TP Down","Auto Play","Drop Brainrot","Lock Target","Auto Medusa","Auto Bat","Fling","Manual TP","Auto Exit Duel"}
 for _,f in ipairs(combatFuncs) do CreateToggle("Combat",f) end
 
-local playerFuncs = {"Speed Customizer","No Walk Animation","Unwalk","Anti Ragdoll","Spin Body","Infinite Jump","Super Jump","No Player Collision"}
+local playerFuncs = {"Speed Customizer","No Walk Animation","Anti Ragdoll","Spin Body","Infinite Jump","Super Jump","No Player Collision"}
 for _,f in ipairs(playerFuncs) do CreateToggle("Player",f) end
 
 local visualFuncs = {"ESP Players","Xray Base","Optimizer","Anti FPS Devourer","No Camera Collision","FOV"}
@@ -4914,11 +4801,7 @@ elseif text == "Lock UI" then
         end
     end
 
-elseif text == "No Walk Animation" or text == "Unwalk" then
-
-    Config["No Walk Animation"] = enabled
-    Config["Unwalk"] = enabled
-    SaveConfig()
+elseif text == "No Walk Animation" then
 
     if enabled then
 
@@ -5390,7 +5273,7 @@ task.spawn(function()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = BUTTON_BLUE
+    button.BackgroundColor3 = Color3.fromRGB(255,255,255)
     button.Parent = tauntGui
 
     Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
@@ -5406,7 +5289,7 @@ task.spawn(function()
 
         if tauntActive then
             button.Text = "TAUNT"
-            button.BackgroundColor3 = BUTTON_BLUE
+            button.BackgroundColor3 = Color3.fromRGB(200,0,0)
 
             task.spawn(function()
                 while tauntActive do
@@ -5417,7 +5300,7 @@ task.spawn(function()
 
         else
             button.Text = "TAUNT"
-            button.BackgroundColor3 = BUTTON_BLUE
+            button.BackgroundColor3 = Color3.fromRGB(255,255,255)
         end
 
     end)
