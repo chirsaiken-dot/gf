@@ -10,7 +10,7 @@ local fovConnection = nil
 local oldFOV = nil
 
 local TweenService = game:GetService("TweenService")
-local BUTTON_BLUE = Color3.fromRGB(0,120,255)
+local BUTTON_BLUE = Color3.fromRGB(102,191,255)
  
 --// ORRXL4 HUB CONFIG SYSTEM
 
@@ -2701,7 +2701,7 @@ local function createSpinButton()
     button.Font = Enum.Font.GothamBold
     button.TextSize = 14
     button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    button.BackgroundColor3 = BUTTON_BLUE
     button.Parent = spinGui
 
     -- Esquinas curvas
@@ -2739,7 +2739,7 @@ end)
             startSpinBody()
         else
             button.Text = "SPIN"
-            button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+            button.BackgroundColor3 = BUTTON_BLUE
             stopSpinBody()
         end
     end)
@@ -3032,7 +3032,7 @@ strokeHub.Color = Color3.fromRGB(255,255,255)
 strokeHub.Thickness = 2
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.55,0,0,40)
+title.Size = UDim2.new(1,-24,0,40)
 title.Position = UDim2.new(0,12,0,8)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
@@ -3357,7 +3357,7 @@ btn.MouseButton1Click:Connect(function()
 		startLock()
 	else
 		btn.Text = "LOCK"
-		btn.BackgroundColor3 = Color3.fromRGB(0,120,255)
+        btn.BackgroundColor3 = BUTTON_BLUE
 		stopLock()
 	end
 
@@ -4010,7 +4010,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
 				end
 
 			end)
@@ -4972,7 +4972,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ HUB ON TOP")
+                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
 				end
 
 			end)
@@ -5281,7 +5281,7 @@ task.spawn(function()
 
             task.spawn(function()
                 while tauntActive do
-                    sendMessage("/Tyriq Hub On Top")
+                    sendMessage("/Tyriq Duels On Top")
                     task.wait(1)
                 end
             end)
@@ -5291,6 +5291,46 @@ task.spawn(function()
             button.BackgroundColor3 = BUTTON_BLUE
         end
 
+    end)
+
+end)
+
+task.spawn(function()
+
+    if game:GetService("CoreGui"):FindFirstChild("LaggerButtonGui") then
+        game:GetService("CoreGui").LaggerButtonGui:Destroy()
+    end
+
+    local laggerGui = Instance.new("ScreenGui")
+    laggerGui.Name = "LaggerButtonGui"
+    laggerGui.ResetOnSpawn = false
+    laggerGui.Parent = game:GetService("CoreGui")
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0,120,0,40)
+    button.Position = UDim2.new(0.500, -483, 0.500, -240)
+    button.Text = "LAGGER"
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.TextColor3 = Color3.new(1,1,1)
+    button.BackgroundColor3 = BUTTON_BLUE
+    button.Parent = laggerGui
+
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
+
+    button.Active = true
+    button.Draggable = not UILocked
+
+    local laggerActive = false
+
+    button.MouseButton1Click:Connect(function()
+        laggerActive = not laggerActive
+        button.Text = laggerActive and "LAGGER ON" or "LAGGER"
+        button.BackgroundColor3 = BUTTON_BLUE
+
+        pcall(function()
+            raknet.desync(laggerActive)
+        end)
     end)
 
 end)
