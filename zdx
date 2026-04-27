@@ -27,8 +27,6 @@ local Config = {
     ["No Camera Collision"] = false,
     ["Auto Exit Duel"] = false,
     ["Speed Enabled"] = false,
-    ["Speed Mode Normal"] = false,
-    ["Speed Mode Desync"] = false,
     ["Speed Minimized"] = false,
     ["AutoPlay Minimized"] = false,
     ["Speed Customizer"] = false,
@@ -1886,7 +1884,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,230)
+main.Size = UDim2.new(0,200,0,185)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1998,28 +1996,6 @@ local activateStroke = Instance.new("UIStroke", activate)
 
 activateStroke.Color = Color3.fromRGB(255,255,255)
 
-local normalTab = Instance.new("TextButton")
-normalTab.Size = UDim2.new(0.48,-6,0,26)
-normalTab.Position = UDim2.new(0,10,0,70)
-normalTab.BackgroundColor3 = BUTTON_BLUE
-normalTab.TextColor3 = Color3.fromRGB(255,255,255)
-normalTab.Text = "NORMAL OFF"
-normalTab.Font = Enum.Font.GothamBold
-normalTab.TextSize = 12
-normalTab.Parent = main
-Instance.new("UICorner", normalTab).CornerRadius = UDim.new(0,8)
-
-local desyncTab = Instance.new("TextButton")
-desyncTab.Size = UDim2.new(0.48,-6,0,26)
-desyncTab.Position = UDim2.new(0.52,0,0,70)
-desyncTab.BackgroundColor3 = BUTTON_BLUE
-desyncTab.TextColor3 = Color3.fromRGB(255,255,255)
-desyncTab.Text = "DESYNC OFF"
-desyncTab.Font = Enum.Font.GothamBold
-desyncTab.TextSize = 12
-desyncTab.Parent = main
-Instance.new("UICorner", desyncTab).CornerRadius = UDim.new(0,8)
-
 --// CREAR ROW FUNCIÓN 
 
 local function createRow(text,posY,default)
@@ -2076,9 +2052,9 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",105,53)
-local stealBox, stealLabel = createRow("Steal Speed",140,29)
-local jumpBox, jumpLabel = createRow("Jump",175,60)
+local speedBox, speedLabel = createRow("Speed",75,53)
+local stealBox, stealLabel = createRow("Steal Speed",110,29)
+local jumpBox, jumpLabel = createRow("Jump",145,60)
 
 speedBox.Text = tostring(Config["Speed Value"])
 stealBox.Text = tostring(Config["Steal Speed Value"])
@@ -2095,52 +2071,6 @@ local speedNoStealValue = 52
 local speedStealValue = 28
 
 local jumpValue = 50
-local speedModeNormal = Config["Speed Mode Normal"] or false
-local speedModeDesync = Config["Speed Mode Desync"] or false
-
-if speedModeNormal and speedModeDesync then
-    speedModeDesync = false
-end
-
-local function updateSpeedModeTabs(save)
-    normalTab.Text = speedModeNormal and "NORMAL ON" or "NORMAL OFF"
-    desyncTab.Text = speedModeDesync and "DESYNC ON" or "DESYNC OFF"
-
-    normalTab.BackgroundColor3 = BUTTON_BLUE
-    desyncTab.BackgroundColor3 = BUTTON_BLUE
-
-    pcall(function()
-        if speedModeDesync then
-            raknet.desync(true)
-        else
-            raknet.desync(false)
-        end
-    end)
-
-    if save then
-        Config["Speed Mode Normal"] = speedModeNormal
-        Config["Speed Mode Desync"] = speedModeDesync
-        SaveConfig()
-    end
-end
-
-normalTab.MouseButton1Click:Connect(function()
-    speedModeNormal = not speedModeNormal
-    if speedModeNormal then
-        speedModeDesync = false
-    end
-    updateSpeedModeTabs(true)
-end)
-
-desyncTab.MouseButton1Click:Connect(function()
-    speedModeDesync = not speedModeDesync
-    if speedModeDesync then
-        speedModeNormal = false
-    end
-    updateSpeedModeTabs(true)
-end)
-
-updateSpeedModeTabs(false)
 
 --// SANITIZE
 
@@ -2198,12 +2128,6 @@ SaveConfig()
 
                     local currentSpeed = isSteal and speedStealValue or speedNoStealValue
 
-                    if speedModeDesync then
-                        currentSpeed = currentSpeed * 1.22
-                    elseif speedModeNormal then
-                        currentSpeed = currentSpeed
-                    end
-
                     hrp.AssemblyLinearVelocity = Vector3.new(
 
                         moveDirection.X * currentSpeed,
@@ -2258,12 +2182,6 @@ if Config["Speed Enabled"] then
 
                 local isSteal = hum.WalkSpeed < 25
                 local currentSpeed = isSteal and speedStealValue or speedNoStealValue
-
-                if speedModeDesync then
-                    currentSpeed = currentSpeed * 1.22
-                elseif speedModeNormal then
-                    currentSpeed = currentSpeed
-                end
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
@@ -2329,9 +2247,7 @@ stealBox,
 jumpBox,
 speedLabel,
 stealLabel,
-jumpLabel,
-normalTab,
-desyncTab
+jumpLabel
 }
 
 if Config["Speed Minimized"] then
@@ -2375,7 +2291,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,230)}
+{Size = UDim2.new(0,200,0,185)}
 )
 
 tween:Play()
@@ -2665,9 +2581,6 @@ local function doDrop()
 
     if not humanoid or not root then return end
 
-    -- usar fling durante el drop para efecto brainrot mas fuerte
-    startWalkFling()
-
     -- guardar altura original
     local originalY = root.Position.Y
 
@@ -2691,8 +2604,6 @@ local function doDrop()
         task.wait()
 
     end
-
-    stopWalkFling()
 
 end
 
@@ -3052,7 +2963,7 @@ topLabel.Size = UDim2.new(1,0,1,0)
 topLabel.BackgroundTransparency = 1
 topLabel.Font = Enum.Font.GothamBold
 topLabel.TextSize = 14
-topLabel.TextColor3 = BUTTON_BLUE
+topLabel.TextColor3 = Color3.fromRGB(255,255,255)
 topLabel.Parent = topBar
 
 local fps, framesCount, last = 60, 0, tick()
@@ -3248,11 +3159,8 @@ end
 local FOV_VALUE = Config["FOV Value"] or 90
 
 LOCK_RADIUS = 70
-local LOCK_SPEED = 59
+local LOCK_SPEED = 50
 local PREDICTION = 0.18
-local TP_TRICK_COOLDOWN = 0.65
-local lastTpTrick = 0
-local LOCK_DOWN_OFFSET = 2
 
 local lockGui
 local lockHbConn
@@ -3317,14 +3225,9 @@ local function startLock()
 
 	lockLv = Instance.new("LinearVelocity", hrp)
 	lockLv.Attachment0 = lockAtt
-    lockLv.MaxForce = 120000
+	lockLv.MaxForce = 50000
 	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
 	lockLv.Enabled = false
-
-    lockGyro = Instance.new("BodyGyro", hrp)
-    lockGyro.MaxTorque = Vector3.new(1e7,1e7,1e7)
-    lockGyro.P = 40000
-    lockGyro.D = 1000
 
 	lockHbConn = RunService.Heartbeat:Connect(function()
 
@@ -3339,11 +3242,9 @@ local function startLock()
 		end
 
 		local tChar = targetPlayer.Character
-        local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
 		local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
-        local tHead = tChar and tChar:FindFirstChild("Head")
 
-        if not tHrp or not tHead or (tHum and tHum.Health <= 0) then
+		if not tHrp then
 			currentTarget = nil
 			lockLv.Enabled = false
 			return
@@ -3351,43 +3252,21 @@ local function startLock()
 
 		lockLv.Enabled = true
 
-        -- seguimiento OP: copiar altura del target y mantenerse ligeramente abajo
-        local hoverY = 2 + math.sin(tick() * 4) * 2
-        local targetVelocity = tHrp.AssemblyLinearVelocity
-        local predictedY = math.clamp(targetVelocity.Y * PREDICTION, -8, 10)
-        local copiedY = tHrp.Position.Y - LOCK_DOWN_OFFSET
-        local targetPos = Vector3.new(
-            tHead.Position.X,
-            copiedY + hoverY + predictedY,
-            tHead.Position.Z
-        )
+		-- 🔥 DIRECTO AL CUERPO (SIN PREDICCIÓN)
+		local targetPos = tHrp.Position
 
 		local dir = targetPos - hrp.Position
 		local distance = dir.Magnitude
 
-        local stopDistance = 0.3
+		local stopDistance = 1.2
 
 		if distance > stopDistance then
+			-- ir directo al target
 			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
 		else
-            lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
+			-- 🧲 pegarse (copiar velocidad)
+			lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity * 1.05
 		end
-
-        -- copiado vertical duro para trackear subidas/bajadas instantaneas
-        if math.abs(hrp.Position.Y - copiedY) > 6 then
-            hrp.CFrame = CFrame.new(hrp.Position.X, copiedY, hrp.Position.Z)
-        end
-
-        -- trick TP down: si el target sube fuerte, te baja rapido para desync visual
-        if tHrp.AssemblyLinearVelocity.Y > 8 and (tick() - lastTpTrick) > TP_TRICK_COOLDOWN then
-            hrp.CFrame = hrp.CFrame * CFrame.new(0, -6, 0)
-            lastTpTrick = tick()
-        end
-
-        -- mirar siempre hacia abajo
-        if lockGyro then
-            lockGyro.CFrame = CFrame.lookAt(hrp.Position, hrp.Position - Vector3.new(0,1,0))
-        end
 
 	end)
 
@@ -3412,11 +3291,6 @@ local function stopLock()
 		lockAtt:Destroy()
 		lockAtt = nil
 	end
-
-    if lockGyro then
-        lockGyro:Destroy()
-        lockGyro = nil
-    end
 
 end
 
@@ -5459,6 +5333,245 @@ task.spawn(function()
         end)
     end)
 
+end)
+
+-- AUTO TP DOWN (ON SCREEN)
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local UserInputService = game:GetService("UserInputService")
+
+    local player = Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+
+    local oldGui = playerGui:FindFirstChild("AutoTPDownGUI")
+    if oldGui then
+        oldGui:Destroy()
+    end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AutoTPDownGUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = playerGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 145, 0, 52)
+    mainFrame.Position = UDim2.new(0.5, -72, 0.6, 0)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(6, 14, 10)
+    mainFrame.BackgroundTransparency = 0.35
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0, 140, 80)
+    stroke.Thickness = 1.2
+    stroke.Parent = mainFrame
+
+    local arrowButton = Instance.new("TextButton")
+    arrowButton.Size = UDim2.new(0, 12, 0, 12)
+    arrowButton.Position = UDim2.new(0, 4, 0, 4)
+    arrowButton.BackgroundTransparency = 1
+    arrowButton.Text = "▲"
+    arrowButton.TextColor3 = Color3.fromRGB(0, 160, 90)
+    arrowButton.TextScaled = true
+    arrowButton.Font = Enum.Font.GothamBold
+    arrowButton.Parent = mainFrame
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -50, 0, 14)
+    title.Position = UDim2.new(0, 22, 0, 3)
+    title.BackgroundTransparency = 1
+    title.Text = "Auto TP"
+    title.TextColor3 = Color3.fromRGB(0, 160, 90)
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = mainFrame
+
+    local onButton = Instance.new("TextButton")
+    onButton.Size = UDim2.new(0.9, 0, 0, 18)
+    onButton.Position = UDim2.new(0.05, 0, 0, 22)
+    onButton.BackgroundColor3 = Color3.fromRGB(0, 120, 70)
+    onButton.Text = "ON"
+    onButton.TextColor3 = Color3.new(1, 1, 1)
+    onButton.TextScaled = true
+    onButton.Font = Enum.Font.GothamBold
+    onButton.Parent = mainFrame
+
+    Instance.new("UICorner", onButton).CornerRadius = UDim.new(0, 5)
+
+    local bottomFrame = Instance.new("Frame")
+    bottomFrame.Size = UDim2.new(0.92, 0, 0, 16)
+    bottomFrame.Position = UDim2.new(0.04, 0, 1, -18)
+    bottomFrame.BackgroundTransparency = 1
+    bottomFrame.Parent = mainFrame
+    bottomFrame.Visible = false
+
+    local yLabel = Instance.new("TextLabel")
+    yLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    yLabel.BackgroundTransparency = 1
+    yLabel.Text = "y-axis"
+    yLabel.TextColor3 = Color3.new(1, 1, 1)
+    yLabel.TextScaled = true
+    yLabel.Font = Enum.Font.Gotham
+    yLabel.Parent = bottomFrame
+
+    local yInput = Instance.new("TextBox")
+    yInput.Size = UDim2.new(0.45, 0, 1, 0)
+    yInput.Position = UDim2.new(0.55, 0, 0, 0)
+    yInput.BackgroundColor3 = Color3.fromRGB(10, 18, 14)
+    yInput.BackgroundTransparency = 0.2
+    yInput.Text = "20"
+    yInput.TextColor3 = Color3.new(1, 1, 1)
+    yInput.TextScaled = true
+    yInput.Font = Enum.Font.Gotham
+    yInput.ClearTextOnFocus = false
+    yInput.Parent = bottomFrame
+
+    Instance.new("UICorner", yInput).CornerRadius = UDim.new(0, 4)
+
+    local char
+    local hrp
+
+    local function setChar(c)
+        char = c
+        hrp = char:WaitForChild("HumanoidRootPart")
+    end
+
+    setChar(player.Character or player.CharacterAdded:Wait())
+
+    player.CharacterAdded:Connect(function(c)
+        task.wait(0.5)
+        setChar(c)
+    end)
+
+    local isOn = true
+    local yValue = -20
+    local minimized = true
+
+    local function loadConfig()
+        local data = player:GetAttribute("AutoTPDown_Config")
+        if data then
+            local saved = string.split(data, ",")
+            if #saved >= 2 then
+                isOn = saved[1] == "true"
+                local num = tonumber(saved[2]) or 20
+                yValue = -math.abs(num)
+                yInput.Text = tostring(num)
+            end
+        end
+        onButton.Text = isOn and "ON" or "OFF"
+        onButton.BackgroundColor3 = isOn and Color3.fromRGB(0, 120, 70) or Color3.fromRGB(60, 70, 60)
+    end
+
+    local function saveConfig()
+        pcall(function()
+            player:SetAttribute("AutoTPDown_Config", tostring(isOn) .. "," .. tostring(math.abs(yValue)))
+        end)
+    end
+
+    loadConfig()
+
+    arrowButton.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        bottomFrame.Visible = not minimized
+        mainFrame.Size = minimized and UDim2.new(0, 145, 0, 52) or UDim2.new(0, 145, 0, 68)
+        arrowButton.Text = minimized and "▲" or "▼"
+    end)
+
+    onButton.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        onButton.Text = isOn and "ON" or "OFF"
+        onButton.BackgroundColor3 = isOn and Color3.fromRGB(0, 120, 70) or Color3.fromRGB(60, 70, 60)
+    end)
+
+    yInput.FocusLost:Connect(function()
+        local num = tonumber(yInput.Text)
+        if num then
+            yValue = -math.abs(math.floor(num))
+            yInput.Text = tostring(math.abs(yValue))
+        else
+            yInput.Text = tostring(math.abs(yValue))
+        end
+    end)
+
+    yInput:GetPropertyChangedSignal("Text"):Connect(function()
+        local new = yInput.Text:gsub("%D", "")
+        if yInput.Text ~= new then
+            yInput.Text = new
+        end
+    end)
+
+    local dragging = false
+    local dragStart
+    local startPos
+    local dragInput
+    local dragThreshold = 8
+    local moved = false
+
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local pos = input.Position
+            local objs = playerGui:GetGuiObjectsAtPosition(pos.X, pos.Y)
+            for _, obj in pairs(objs) do
+                if obj ~= mainFrame and obj:IsDescendantOf(mainFrame) then
+                    if obj:IsA("TextButton") or obj:IsA("TextBox") then
+                        return
+                    end
+                end
+            end
+            dragging = true
+            moved = false
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            if not moved and delta.Magnitude < dragThreshold then
+                return
+            end
+            moved = true
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if isOn and hrp and hrp.Parent then
+                if hrp.Position.Y >= math.abs(yValue) then
+                    hrp.CFrame = CFrame.new(hrp.Position.X, -8.80, hrp.Position.Z)
+                end
+            end
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            task.wait(4)
+            saveConfig()
+        end
+    end)
 end)
 
 local function makeSpeedGui()
