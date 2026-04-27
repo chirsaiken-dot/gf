@@ -7,6 +7,12 @@ local C = {
     lp = game:GetService("Players").LocalPlayer
 }
 
+local OUTLINE_COLOR = Color3.fromRGB(140, 210, 255)
+local PANEL_COLOR = Color3.fromRGB(48, 48, 48)
+local BUTTON_COLOR = Color3.fromRGB(62, 62, 62)
+local BUTTON_ON_COLOR = Color3.fromRGB(90, 90, 90)
+local INPUT_COLOR = Color3.fromRGB(70, 70, 70)
+
 local char, hum, hrp
 local function upd() 
     char = C.lp.Character or C.lp.CharacterAdded:Wait()
@@ -91,7 +97,7 @@ sg.ResetOnSpawn = false
 local box = Instance.new("Frame", sg)
 box.Size = UDim2.new(0, 108, 0, 42)
 box.Position = UDim2.new(0.5, -54, 0.4, 0)
-box.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+box.BackgroundColor3 = PANEL_COLOR
 box.Active = true
 Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
 makeDraggable(box)
@@ -100,15 +106,13 @@ makeDraggable(box)
 local boxStroke = Instance.new("UIStroke", box)
 boxStroke.Thickness = 2.5
 boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-C.RS.RenderStepped:Connect(function()
-    boxStroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-end)
+boxStroke.Color = OUTLINE_COLOR
 
 -- Fly button inside box
 local flyMainBtn = Instance.new("TextButton", box)
 flyMainBtn.Size = UDim2.new(0, 70, 0, 30)
 flyMainBtn.Position = UDim2.new(0, 6, 0.5, -15)
-flyMainBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+flyMainBtn.BackgroundColor3 = BUTTON_COLOR
 flyMainBtn.Text = "Fly"
 flyMainBtn.TextColor3 = Color3.new(1, 1, 1)
 flyMainBtn.Font = Enum.Font.GothamBold
@@ -116,7 +120,7 @@ flyMainBtn.TextSize = 14
 Instance.new("UICorner", flyMainBtn).CornerRadius = UDim.new(0, 6)
 
 local function updateFlyMainBtn()
-    flyMainBtn.BackgroundColor3 = Config.Fly and Color3.fromRGB(45, 130, 45) or Color3.fromRGB(35, 35, 35)
+    flyMainBtn.BackgroundColor3 = Config.Fly and BUTTON_ON_COLOR or BUTTON_COLOR
 end
 updateFlyMainBtn()
 
@@ -131,7 +135,7 @@ end)
 local gearBtn = Instance.new("TextButton", box)
 gearBtn.Size = UDim2.new(0, 26, 0, 30)
 gearBtn.Position = UDim2.new(0, 78, 0.5, -15)
-gearBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+gearBtn.BackgroundColor3 = BUTTON_COLOR
 gearBtn.Text = "⚙"
 gearBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 gearBtn.Font = Enum.Font.GothamBold
@@ -142,7 +146,7 @@ Instance.new("UICorner", gearBtn).CornerRadius = UDim.new(0, 6)
 local settingsPanel = Instance.new("Frame", sg)
 settingsPanel.Size = UDim2.new(0, 170, 0, 204)
 settingsPanel.Position = UDim2.new(0.5, -85, 0.4, 48)
-settingsPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+settingsPanel.BackgroundColor3 = PANEL_COLOR
 settingsPanel.Visible = false
 settingsPanel.Active = true
 Instance.new("UICorner", settingsPanel).CornerRadius = UDim.new(0, 8)
@@ -151,9 +155,7 @@ makeDraggable(settingsPanel)
 local spStroke = Instance.new("UIStroke", settingsPanel)
 spStroke.Thickness = 2.5
 spStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-C.RS.RenderStepped:Connect(function()
-    spStroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-end)
+spStroke.Color = OUTLINE_COLOR
 
 local stitle = Instance.new("TextLabel", settingsPanel)
 stitle.Size, stitle.Text = UDim2.new(1, 0, 0, 24), "Settings"
@@ -174,7 +176,7 @@ local function makeRow(parent, label, yOff, value, onChange)
 
     local box = Instance.new("TextBox", parent)
     box.Size, box.Position = UDim2.new(0, 50, 0, 22), UDim2.new(1, -58, 0, yOff + 1)
-    box.BackgroundColor3, box.Text, box.TextColor3 = Color3.fromRGB(40, 40, 40), tostring(value), Color3.new(1, 1, 1)
+    box.BackgroundColor3, box.Text, box.TextColor3 = INPUT_COLOR, tostring(value), Color3.new(1, 1, 1)
     box.Font, box.TextSize = Enum.Font.Gotham, 12
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
     box.FocusLost:Connect(function()
@@ -194,7 +196,7 @@ Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(0, 6)
 
 local function updateFlyBtn()
     flyBtn.Text = "Fly: " .. (Config.Fly and "ON" or "OFF")
-    flyBtn.BackgroundColor3 = Config.Fly and Color3.fromRGB(45, 90, 140) or Color3.fromRGB(35, 35, 35)
+    flyBtn.BackgroundColor3 = Config.Fly and BUTTON_ON_COLOR or BUTTON_COLOR
 end
 updateFlyBtn()
 
@@ -213,7 +215,7 @@ Instance.new("UICorner", adBtn).CornerRadius = UDim.new(0, 6)
 
 local function updateAD()
     adBtn.Text = "Anti-Die: " .. (Config.AntiDie and "ON" or "OFF")
-    adBtn.BackgroundColor3 = Config.AntiDie and Color3.fromRGB(45, 90, 45) or Color3.fromRGB(35, 35, 35)
+    adBtn.BackgroundColor3 = Config.AntiDie and BUTTON_ON_COLOR or BUTTON_COLOR
 end
 updateAD()
 
