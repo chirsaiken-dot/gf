@@ -10,10 +10,7 @@ local fovConnection = nil
 local oldFOV = nil
 
 local TweenService = game:GetService("TweenService")
-local THEME_ACCENT = Color3.fromRGB(0,160,90)
-local THEME_ACCENT_DARK = Color3.fromRGB(0,120,70)
-local THEME_STROKE = Color3.fromRGB(0,140,80)
-local BUTTON_BLUE = THEME_ACCENT_DARK
+local BUTTON_BLUE = Color3.fromRGB(0,120,70)
  
 --// ORRXL4 HUB CONFIG SYSTEM
 
@@ -68,6 +65,9 @@ local Config = {
     ["TP Down Button Y"] = 0.7,
     ["TP Down Button OffsetX"] = -70,
     ["TP Down Button OffsetY"] = 0,
+    ["TP Down Auto On"] = true,
+    ["TP Down Minimized"] = true,
+    ["TP Down Y Axis"] = 20,
 
     ["Fling Button X"] = 0.5,
     ["Fling Button Y"] = 0.85,
@@ -3497,106 +3497,273 @@ end
 tpDownGui = tpDownGui or nil
 tpDownEnabled = tpDownEnabled or false
 tpDownDebounce = tpDownDebounce or false
+local tpDownAutoConnection
+local tpDownGuiConnections = {}
+local tpDownHrp
+local tpDownIsOn = true
+local tpDownYValue = -20
+local tpDownMinimized = true
 
-function getGroundPosition()
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
+local function setTPDownChar(c)
+    if not c then return end
+    tpDownHrp = c:FindFirstChild("HumanoidRootPart") or c:WaitForChild("HumanoidRootPart", 5)
+end
 
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+setTPDownChar(lp.Character or lp.CharacterAdded:Wait())
 
-    local rayOrigin = root.Position
-    local rayDirection = Vector3.new(0, -500, 0)
+lp.CharacterAdded:Connect(function(c)
+    task.wait(0.5)
+    setTPDownChar(c)
+end)
 
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {char}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local result = workspace:Raycast(rayOrigin, rayDirection, params)
-
-    if result then
-        return result.Position
-    end
+local function saveTPDownConfig()
+    Config["TP Down Auto On"] = tpDownIsOn
+    Config["TP Down Minimized"] = tpDownMinimized
+    Config["TP Down Y Axis"] = math.abs(tpDownYValue)
+    SaveConfig()
 end
 
 function doTPDown()
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
-
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    local targetY = -8
-
-    -- mover solo en Y sin rotar
-    root.CFrame = root.CFrame * CFrame.new(0, targetY - root.Position.Y, 0)
+    if not tpDownHrp or not tpDownHrp.Parent then return end
+    tpDownHrp.CFrame = CFrame.new(tpDownHrp.Position.X, -8.80, tpDownHrp.Position.Z)
 end
 
 function CreateTPDownButton()
 
     if tpDownGui then return end
 
+    tpDownIsOn = (Config["TP Down Auto On"] ~= false)
+    tpDownMinimized = (Config["TP Down Minimized"] ~= false)
+    tpDownYValue = -math.abs(math.floor(tonumber(Config["TP Down Y Axis"]) or 20))
+
     tpDownGui = Instance.new("ScreenGui")
-    tpDownGui.Name = "TPDownButtonGui"
+    tpDownGui.Name = "AutoTPDownGUI"
     tpDownGui.ResetOnSpawn = false
-    tpDownGui.Parent = game:GetService("CoreGui")
+    tpDownGui.Parent = lp:WaitForChild("PlayerGui")
 
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0,120,0,40)
-    button.Position = UDim2.new(
-    Config["TP Down Button X"],
-    Config["TP Down Button OffsetX"],
-    Config["TP Down Button Y"],
-    Config["TP Down Button OffsetY"]
-)
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0,145,0,52)
+    mainFrame.Position = UDim2.new(
+        Config["TP Down Button X"],
+        Config["TP Down Button OffsetX"],
+        Config["TP Down Button Y"],
+        Config["TP Down Button OffsetY"]
+    )
+    mainFrame.BackgroundColor3 = Color3.fromRGB(6,14,10)
+    mainFrame.BackgroundTransparency = 0.35
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = tpDownGui
 
-    button.Text = "TP DOWN"
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 14
-    button.TextColor3 = Color3.new(1,1,1)
-    button.BackgroundColor3 = BUTTON_BLUE
-    button.Parent = tpDownGui
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,10)
 
-    Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0,140,80)
+    stroke.Thickness = 1.2
+    stroke.Parent = mainFrame
 
-    button.Active = true
-    button.Draggable = not UILocked
+    local arrowButton = Instance.new("TextButton")
+    arrowButton.Size = UDim2.new(0,12,0,12)
+    arrowButton.Position = UDim2.new(0,4,0,4)
+    arrowButton.BackgroundTransparency = 1
+    arrowButton.TextColor3 = Color3.fromRGB(0,160,90)
+    arrowButton.TextScaled = true
+    arrowButton.Font = Enum.Font.GothamBold
+    arrowButton.Parent = mainFrame
 
-button.InputEnded:Connect(function(input)
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1,-50,0,14)
+    title.Position = UDim2.new(0,22,0,3)
+    title.BackgroundTransparency = 1
+    title.Text = "Auto TP"
+    title.TextColor3 = Color3.fromRGB(0,160,90)
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = mainFrame
 
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
+    local onButton = Instance.new("TextButton")
+    onButton.Size = UDim2.new(0.9,0,0,18)
+    onButton.Position = UDim2.new(0.05,0,0,22)
+    onButton.TextColor3 = Color3.new(1,1,1)
+    onButton.TextScaled = true
+    onButton.Font = Enum.Font.GothamBold
+    onButton.Parent = mainFrame
 
-        local pos = button.Position
+    Instance.new("UICorner", onButton).CornerRadius = UDim.new(0,5)
 
-        Config["TP Down Button X"] = pos.X.Scale
-        Config["TP Down Button OffsetX"] = pos.X.Offset
-        Config["TP Down Button Y"] = pos.Y.Scale
-        Config["TP Down Button OffsetY"] = pos.Y.Offset
+    local bottomFrame = Instance.new("Frame")
+    bottomFrame.Size = UDim2.new(0.92,0,0,16)
+    bottomFrame.Position = UDim2.new(0.04,0,1,-18)
+    bottomFrame.BackgroundTransparency = 1
+    bottomFrame.Parent = mainFrame
 
-        SaveConfig()
+    local yLabel = Instance.new("TextLabel")
+    yLabel.Size = UDim2.new(0.5,0,1,0)
+    yLabel.BackgroundTransparency = 1
+    yLabel.Text = "y-axis"
+    yLabel.TextColor3 = Color3.new(1,1,1)
+    yLabel.TextScaled = true
+    yLabel.Font = Enum.Font.Gotham
+    yLabel.Parent = bottomFrame
+
+    local yInput = Instance.new("TextBox")
+    yInput.Size = UDim2.new(0.45,0,1,0)
+    yInput.Position = UDim2.new(0.55,0,0,0)
+    yInput.BackgroundColor3 = Color3.fromRGB(10,18,14)
+    yInput.BackgroundTransparency = 0.2
+    yInput.Text = tostring(math.abs(tpDownYValue))
+    yInput.TextColor3 = Color3.new(1,1,1)
+    yInput.TextScaled = true
+    yInput.Font = Enum.Font.Gotham
+    yInput.ClearTextOnFocus = false
+    yInput.Parent = bottomFrame
+
+    Instance.new("UICorner", yInput).CornerRadius = UDim.new(0,4)
+
+    local function refreshTPDownVisuals()
+        onButton.Text = tpDownIsOn and "ON" or "OFF"
+        onButton.BackgroundColor3 = tpDownIsOn and Color3.fromRGB(0,120,70) or Color3.fromRGB(60,70,60)
+
+        bottomFrame.Visible = not tpDownMinimized
+        mainFrame.Size = tpDownMinimized and UDim2.new(0,145,0,52) or UDim2.new(0,145,0,68)
+        arrowButton.Text = tpDownMinimized and "▲" or "▼"
     end
 
-end)
+    refreshTPDownVisuals()
 
-    button.MouseButton1Click:Connect(function()
+    table.insert(tpDownGuiConnections, arrowButton.MouseButton1Click:Connect(function()
+        tpDownMinimized = not tpDownMinimized
+        refreshTPDownVisuals()
+        saveTPDownConfig()
+    end))
 
-        if tpDownDebounce then return end
-        tpDownDebounce = true
+    table.insert(tpDownGuiConnections, onButton.MouseButton1Click:Connect(function()
+        tpDownIsOn = not tpDownIsOn
+        refreshTPDownVisuals()
+        saveTPDownConfig()
+    end))
 
-        button.BackgroundColor3 = BUTTON_BLUE
+    table.insert(tpDownGuiConnections, yInput.FocusLost:Connect(function()
+        local num = tonumber(yInput.Text)
+        if num then
+            tpDownYValue = -math.abs(math.floor(num))
+            yInput.Text = tostring(math.abs(tpDownYValue))
+        else
+            yInput.Text = tostring(math.abs(tpDownYValue))
+        end
+        saveTPDownConfig()
+    end))
 
-        doTPDown()
+    table.insert(tpDownGuiConnections, yInput:GetPropertyChangedSignal("Text"):Connect(function()
+        local newText = yInput.Text:gsub("%D", "")
+        if yInput.Text ~= newText then
+            yInput.Text = newText
+        end
+    end))
 
-        task.wait(0.2)
+    local dragging = false
+    local dragStart
+    local startPos
+    local dragInput
+    local dragThreshold = 8
+    local moved = false
 
-        button.BackgroundColor3 = BUTTON_BLUE
-        tpDownDebounce = false
+    table.insert(tpDownGuiConnections, mainFrame.InputBegan:Connect(function(input)
+        if UILocked then return end
 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local pos = input.Position
+            local objs = tpDownGui:GetGuiObjectsAtPosition(pos.X, pos.Y)
+
+            for _, obj in pairs(objs) do
+                if obj ~= mainFrame and obj:IsDescendantOf(mainFrame) then
+                    if obj:IsA("TextButton") or obj:IsA("TextBox") then
+                        return
+                    end
+                end
+            end
+
+            dragging = true
+            moved = false
+            dragStart = input.Position
+            startPos = mainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+
+                    if moved then
+                        local p = mainFrame.Position
+                        Config["TP Down Button X"] = p.X.Scale
+                        Config["TP Down Button OffsetX"] = p.X.Offset
+                        Config["TP Down Button Y"] = p.Y.Scale
+                        Config["TP Down Button OffsetY"] = p.Y.Offset
+                        SaveConfig()
+                    end
+                end
+            end)
+        end
+    end))
+
+    table.insert(tpDownGuiConnections, mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end))
+
+    table.insert(tpDownGuiConnections, UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            if not moved and delta.Magnitude < dragThreshold then
+                return
+            end
+
+            moved = true
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end))
+
+    if tpDownAutoConnection then
+        tpDownAutoConnection:Disconnect()
+        tpDownAutoConnection = nil
+    end
+
+    local elapsed = 0
+    tpDownAutoConnection = RunService.Heartbeat:Connect(function(dt)
+        elapsed += dt
+        if elapsed < 0.1 then return end
+        elapsed = 0
+
+        if tpDownIsOn and tpDownHrp and tpDownHrp.Parent then
+            if tpDownHrp.Position.Y >= math.abs(tpDownYValue) then
+                doTPDown()
+            end
+        end
     end)
+
+    saveTPDownConfig()
+    Config["TP Down"] = true
+    SaveConfig()
 end
 
 function RemoveTPDownButton()
+    for _, conn in ipairs(tpDownGuiConnections) do
+        if conn and conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    tpDownGuiConnections = {}
+
+    if tpDownAutoConnection then
+        tpDownAutoConnection:Disconnect()
+        tpDownAutoConnection = nil
+    end
+
     if tpDownGui then
         tpDownGui:Destroy()
         tpDownGui = nil
@@ -3659,7 +3826,7 @@ for i,v in ipairs(sections) do
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Parent = hub
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-    Instance.new("UIStroke", btn).Color = THEME_STROKE
+    Instance.new("UIStroke", btn).Color = Color3.fromRGB(0,140,80)
     table.insert(sectionButtons, btn)
     btn.MouseButton1Click:Connect(function() ShowSection(v) end)
 end
@@ -3674,7 +3841,7 @@ local function CreateToggle(sectionName,text)
         container.BackgroundTransparency = 0.2
         container.Parent = parentFrame
         Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
-        Instance.new("UIStroke", container).Color = THEME_STROKE
+        Instance.new("UIStroke", container).Color = Color3.fromRGB(0,140,80)
 
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(0.6,0,1,0)
@@ -3682,7 +3849,7 @@ local function CreateToggle(sectionName,text)
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
         label.TextSize = 14
-        label.TextColor3 = THEME_ACCENT
+        label.TextColor3 = Color3.fromRGB(0,160,90)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Text = "Instant Grab Range"
         label.Parent = container
@@ -3699,7 +3866,7 @@ radioTextbox = textbox
         textbox.ClearTextOnFocus = false
         textbox.Parent = container
         Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,6)
-        Instance.new("UIStroke", textbox).Color = THEME_STROKE
+        Instance.new("UIStroke", textbox).Color = Color3.fromRGB(0,140,80)
 
         textbox.FocusLost:Connect(function(enterPressed)
             if enterPressed then
@@ -3725,7 +3892,7 @@ radioTextbox = textbox
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
-    Instance.new("UIStroke", container).Color = THEME_STROKE
+    Instance.new("UIStroke", container).Color = Color3.fromRGB(0,140,80)
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.6,0,1,0)
@@ -3733,7 +3900,7 @@ radioTextbox = textbox
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamBold
     label.TextSize = 14
-    label.TextColor3 = THEME_ACCENT
+    label.TextColor3 = Color3.fromRGB(0,160,90)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = text
     label.Parent = container
@@ -3948,12 +4115,6 @@ elseif text == "TP Down" then
         CreateTPDownButton()
     else
         RemoveTPDownButton()
-    end
-
-    if enabled then
-        createAutoWalkGui()
-    else
-        destroyAutoWalkGui()
     end
 
 elseif text == "Auto Play" then
@@ -4390,7 +4551,7 @@ corner.CornerRadius = UDim.new(0,10)
 corner.Parent = container  
 
 local stroke = Instance.new("UIStroke")  
-stroke.Color = THEME_STROKE  
+stroke.Color = Color3.fromRGB(0,140,80)  
 stroke.Thickness = 1  
 stroke.Parent = container  
 
@@ -4540,7 +4701,7 @@ container.BackgroundColor3 = Color3.fromRGB(15,15,15)
 container.BackgroundTransparency = 0.2  
 container.Parent = parentFrame  
 Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)  
-Instance.new("UIStroke", container).Color = THEME_STROKE  
+Instance.new("UIStroke", container).Color = Color3.fromRGB(0,140,80)  
 
 local label = Instance.new("TextLabel")  
 label.Size = UDim2.new(0.6,0,1,0)  
@@ -5383,7 +5544,7 @@ local function makeSpeedGui()
 	t.Size=UDim2.new(1,-6,1,0)
 	t.Position=UDim2.new(0,3,0,0)
 	t.BackgroundTransparency=1
-    t.TextColor3=THEME_ACCENT
+	t.TextColor3=Color3.fromRGB(0,170,255)
 	t.TextScaled=true
 	t.Font=Enum.Font.GothamBlack
 	t.RichText=true
@@ -5410,241 +5571,3 @@ end
 
 lp.CharacterAdded:Connect(function() task.wait(0.3) makeSpeedGui() end)
 makeSpeedGui()
-
-do
-    local Players = game:GetService("Players")
-    local UserInputService = game:GetService("UserInputService")
-
-    local player = Players.LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
-
-    local oldGui = playerGui:FindFirstChild("AutoTPDownGUI")
-    if oldGui then
-        oldGui:Destroy()
-    end
-
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "AutoTPDownGUI"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = playerGui
-
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 145, 0, 52)
-    mainFrame.Position = UDim2.new(0.5, -72, 0.6, 0)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(6, 14, 10)
-    mainFrame.BackgroundTransparency = 0.35
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Parent = screenGui
-
-    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(0, 140, 80)
-    stroke.Thickness = 1.2
-    stroke.Parent = mainFrame
-
-    local arrowButton = Instance.new("TextButton")
-    arrowButton.Size = UDim2.new(0, 12, 0, 12)
-    arrowButton.Position = UDim2.new(0, 4, 0, 4)
-    arrowButton.BackgroundTransparency = 1
-    arrowButton.Text = "▲"
-    arrowButton.TextColor3 = Color3.fromRGB(0, 160, 90)
-    arrowButton.TextScaled = true
-    arrowButton.Font = Enum.Font.GothamBold
-    arrowButton.Parent = mainFrame
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -50, 0, 14)
-    title.Position = UDim2.new(0, 22, 0, 3)
-    title.BackgroundTransparency = 1
-    title.Text = "Auto TP"
-    title.TextColor3 = Color3.fromRGB(0, 160, 90)
-    title.TextScaled = true
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = mainFrame
-
-    local onButton = Instance.new("TextButton")
-    onButton.Size = UDim2.new(0.9, 0, 0, 18)
-    onButton.Position = UDim2.new(0.05, 0, 0, 22)
-    onButton.BackgroundColor3 = Color3.fromRGB(0, 120, 70)
-    onButton.Text = "ON"
-    onButton.TextColor3 = Color3.new(1, 1, 1)
-    onButton.TextScaled = true
-    onButton.Font = Enum.Font.GothamBold
-    onButton.Parent = mainFrame
-
-    Instance.new("UICorner", onButton).CornerRadius = UDim.new(0, 5)
-
-    local bottomFrame = Instance.new("Frame")
-    bottomFrame.Size = UDim2.new(0.92, 0, 0, 16)
-    bottomFrame.Position = UDim2.new(0.04, 0, 1, -18)
-    bottomFrame.BackgroundTransparency = 1
-    bottomFrame.Parent = mainFrame
-    bottomFrame.Visible = false
-
-    local yLabel = Instance.new("TextLabel")
-    yLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    yLabel.BackgroundTransparency = 1
-    yLabel.Text = "y-axis"
-    yLabel.TextColor3 = Color3.new(1, 1, 1)
-    yLabel.TextScaled = true
-    yLabel.Font = Enum.Font.Gotham
-    yLabel.Parent = bottomFrame
-
-    local yInput = Instance.new("TextBox")
-    yInput.Size = UDim2.new(0.45, 0, 1, 0)
-    yInput.Position = UDim2.new(0.55, 0, 0, 0)
-    yInput.BackgroundColor3 = Color3.fromRGB(10, 18, 14)
-    yInput.BackgroundTransparency = 0.2
-    yInput.Text = "20"
-    yInput.TextColor3 = Color3.new(1, 1, 1)
-    yInput.TextScaled = true
-    yInput.Font = Enum.Font.Gotham
-    yInput.ClearTextOnFocus = false
-    yInput.Parent = bottomFrame
-
-    Instance.new("UICorner", yInput).CornerRadius = UDim.new(0, 4)
-
-    local char
-    local hrp
-
-    local function setChar(c)
-        char = c
-        hrp = char:WaitForChild("HumanoidRootPart")
-    end
-
-    setChar(player.Character or player.CharacterAdded:Wait())
-
-    player.CharacterAdded:Connect(function(c)
-        task.wait(0.5)
-        setChar(c)
-    end)
-
-    local isOn = true
-    local yValue = -20
-    local minimized = true
-
-    local function loadConfig()
-        local data = player:GetAttribute("AutoTPDown_Config")
-        if data then
-            local saved = string.split(data, ",")
-            if #saved >= 2 then
-                isOn = saved[1] == "true"
-                local num = tonumber(saved[2]) or 20
-                yValue = -math.abs(num)
-                yInput.Text = tostring(num)
-            end
-        end
-        onButton.Text = isOn and "ON" or "OFF"
-        onButton.BackgroundColor3 = isOn and Color3.fromRGB(0, 120, 70) or Color3.fromRGB(60, 70, 60)
-    end
-
-    local function saveConfig()
-        pcall(function()
-            player:SetAttribute("AutoTPDown_Config", tostring(isOn) .. "," .. tostring(math.abs(yValue)))
-        end)
-    end
-
-    loadConfig()
-
-    arrowButton.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        bottomFrame.Visible = not minimized
-        mainFrame.Size = minimized and UDim2.new(0, 145, 0, 52) or UDim2.new(0, 145, 0, 68)
-        arrowButton.Text = minimized and "▲" or "▼"
-    end)
-
-    onButton.MouseButton1Click:Connect(function()
-        isOn = not isOn
-        onButton.Text = isOn and "ON" or "OFF"
-        onButton.BackgroundColor3 = isOn and Color3.fromRGB(0, 120, 70) or Color3.fromRGB(60, 70, 60)
-    end)
-
-    yInput.FocusLost:Connect(function()
-        local num = tonumber(yInput.Text)
-        if num then
-            yValue = -math.abs(math.floor(num))
-            yInput.Text = tostring(math.abs(yValue))
-        else
-            yInput.Text = tostring(math.abs(yValue))
-        end
-    end)
-
-    yInput:GetPropertyChangedSignal("Text"):Connect(function()
-        local new = yInput.Text:gsub("%D", "")
-        if yInput.Text ~= new then
-            yInput.Text = new
-        end
-    end)
-
-    local dragging = false
-    local dragStart
-    local startPos
-    local dragInput
-    local dragThreshold = 8
-    local moved = false
-
-    mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local pos = input.Position
-            local objs = playerGui:GetGuiObjectsAtPosition(pos.X, pos.Y)
-            for _, obj in pairs(objs) do
-                if obj ~= mainFrame and obj:IsDescendantOf(mainFrame) then
-                    if obj:IsA("TextButton") or obj:IsA("TextBox") then
-                        return
-                    end
-                end
-            end
-            dragging = true
-            moved = false
-            dragStart = input.Position
-            startPos = mainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    mainFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            if not moved and delta.Magnitude < dragThreshold then
-                return
-            end
-            moved = true
-            mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    task.spawn(function()
-        while true do
-            task.wait(0.1)
-            if isOn and hrp and hrp.Parent then
-                if hrp.Position.Y >= math.abs(yValue) then
-                    hrp.CFrame = CFrame.new(hrp.Position.X, -8.80, hrp.Position.Z)
-                end
-            end
-        end
-    end)
-
-    task.spawn(function()
-        while true do
-            task.wait(4)
-            saveConfig()
-        end
-    end)
-end
