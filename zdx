@@ -3494,44 +3494,22 @@ end
 tpDownGui = tpDownGui or nil
 tpDownEnabled = tpDownEnabled or false
 tpDownDebounce = tpDownDebounce or false
-local tpDownLoop
-local tpDownSaveLoop
 local tpDownDragConn
-local tpDownInputChangedConn
-local tpDownChar
-local tpDownRoot
+local tpDownLoopOnConn
+local tpDownLoopSaveConn
 
-local function setTPDownChar(c)
-    tpDownChar = c
-    tpDownRoot = tpDownChar:WaitForChild("HumanoidRootPart")
-end
-
-local function disconnectTPDownLoops()
-    if tpDownLoop then
-        task.cancel(tpDownLoop)
-        tpDownLoop = nil
-    end
-
-    if tpDownSaveLoop then
-        task.cancel(tpDownSaveLoop)
-        tpDownSaveLoop = nil
-    end
-
-    if tpDownDragConn then
-        tpDownDragConn:Disconnect()
-        tpDownDragConn = nil
-    end
-
-    if tpDownInputChangedConn then
-        tpDownInputChangedConn:Disconnect()
-        tpDownInputChangedConn = nil
-    end
+function doTPDown()
+    local char = lp.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    root.CFrame = CFrame.new(root.Position.X, -8.80, root.Position.Z)
 end
 
 function CreateTPDownButton()
     if tpDownGui then return end
 
-    local player = Players.LocalPlayer
+    local player = lp
     local playerGui = player:WaitForChild("PlayerGui")
 
     tpDownGui = Instance.new("ScreenGui")
@@ -3546,6 +3524,7 @@ function CreateTPDownButton()
     mainFrame.BackgroundTransparency = 0.35
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = tpDownGui
+    mainFrame.Active = true
 
     Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
@@ -3584,6 +3563,7 @@ function CreateTPDownButton()
     onButton.TextScaled = true
     onButton.Font = Enum.Font.GothamBold
     onButton.Parent = mainFrame
+
     Instance.new("UICorner", onButton).CornerRadius = UDim.new(0, 5)
 
     local bottomFrame = Instance.new("Frame")
@@ -3613,15 +3593,29 @@ function CreateTPDownButton()
     yInput.Font = Enum.Font.Gotham
     yInput.ClearTextOnFocus = false
     yInput.Parent = bottomFrame
+
     Instance.new("UICorner", yInput).CornerRadius = UDim.new(0, 4)
 
-    setTPDownChar(player.Character or player.CharacterAdded:Wait())
+    local char
+    local hrp
+
+    local function setChar(c)
+        char = c
+        hrp = char:WaitForChild("HumanoidRootPart")
+    end
+
+    setChar(player.Character or player.CharacterAdded:Wait())
+
+    local charAddedConn = player.CharacterAdded:Connect(function(c)
+        task.wait(0.5)
+        setChar(c)
+    end)
 
     local isOn = true
     local yValue = -20
     local minimized = true
 
-    local function loadConfigTP()
+    local function loadConfig()
         local data = player:GetAttribute("AutoTPDown_Config")
         if data then
             local saved = string.split(data, ",")
@@ -3632,18 +3626,17 @@ function CreateTPDownButton()
                 yInput.Text = tostring(num)
             end
         end
-
         onButton.Text = isOn and "ON" or "OFF"
         onButton.BackgroundColor3 = isOn and Color3.fromRGB(0, 120, 70) or Color3.fromRGB(60, 70, 60)
     end
 
-    local function saveConfigTP()
+    local function saveConfig()
         pcall(function()
             player:SetAttribute("AutoTPDown_Config", tostring(isOn) .. "," .. tostring(math.abs(yValue)))
         end)
     end
 
-    loadConfigTP()
+    loadConfig()
 
     arrowButton.MouseButton1Click:Connect(function()
         minimized = not minimized
@@ -3693,12 +3686,10 @@ function CreateTPDownButton()
                     end
                 end
             end
-
             dragging = true
             moved = false
             dragStart = input.Position
             startPos = mainFrame.Position
-
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -3713,13 +3704,12 @@ function CreateTPDownButton()
         end
     end)
 
-    tpDownInputChangedConn = UserInputService.InputChanged:Connect(function(input)
+    tpDownDragConn = UserInputService.InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             local delta = input.Position - dragStart
             if not moved and delta.Magnitude < dragThreshold then
                 return
             end
-
             moved = true
             mainFrame.Position = UDim2.new(
                 startPos.X.Scale,
@@ -3730,32 +3720,47 @@ function CreateTPDownButton()
         end
     end)
 
-    tpDownDragConn = player.CharacterAdded:Connect(function(c)
-        task.wait(0.5)
-        setTPDownChar(c)
-    end)
-
-    tpDownLoop = task.spawn(function()
+    tpDownLoopOnConn = task.spawn(function()
         while tpDownGui and tpDownGui.Parent do
             task.wait(0.1)
-            if isOn and tpDownRoot and tpDownRoot.Parent then
-                if tpDownRoot.Position.Y >= math.abs(yValue) then
-                    tpDownRoot.CFrame = CFrame.new(tpDownRoot.Position.X, -8.80, tpDownRoot.Position.Z)
+            if isOn and hrp and hrp.Parent then
+                if hrp.Position.Y >= math.abs(yValue) then
+                    hrp.CFrame = CFrame.new(hrp.Position.X, -8.80, hrp.Position.Z)
                 end
             end
         end
     end)
 
-    tpDownSaveLoop = task.spawn(function()
+    tpDownLoopSaveConn = task.spawn(function()
         while tpDownGui and tpDownGui.Parent do
             task.wait(4)
-            saveConfigTP()
+            saveConfig()
+        end
+    end)
+
+    tpDownGui.Destroying:Once(function()
+        if charAddedConn then
+            charAddedConn:Disconnect()
         end
     end)
 end
 
 function RemoveTPDownButton()
-    disconnectTPDownLoops()
+    if tpDownDragConn then
+        tpDownDragConn:Disconnect()
+        tpDownDragConn = nil
+    end
+
+    if tpDownLoopOnConn then
+        pcall(task.cancel, tpDownLoopOnConn)
+        tpDownLoopOnConn = nil
+    end
+
+    if tpDownLoopSaveConn then
+        pcall(task.cancel, tpDownLoopSaveConn)
+        tpDownLoopSaveConn = nil
+    end
+
     if tpDownGui then
         tpDownGui:Destroy()
         tpDownGui = nil
