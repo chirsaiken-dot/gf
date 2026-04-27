@@ -18,7 +18,6 @@ upd()
 -- Configuration & Save System
 local CFG_FILE = "TimCheeseConfig.json"
 local Config = {
-    Float = false, FloatH = 5, FloatS = 3,
     Fly = false, FlyY = 25, FlyS = 35,
     AntiDie = false
 }
@@ -88,7 +87,7 @@ local sg = Instance.new("ScreenGui", C.CG)
 sg.Name = "TimCheeseHub"
 sg.ResetOnSpawn = false
 
--- Box container for Float + Gear
+-- Box container for Fly + Gear
 local box = Instance.new("Frame", sg)
 box.Size = UDim2.new(0, 108, 0, 42)
 box.Position = UDim2.new(0.5, -54, 0.4, 0)
@@ -105,29 +104,30 @@ C.RS.RenderStepped:Connect(function()
     boxStroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
 end)
 
--- Float button inside box
-local floatBtn = Instance.new("TextButton", box)
-floatBtn.Size = UDim2.new(0, 70, 0, 30)
-floatBtn.Position = UDim2.new(0, 6, 0.5, -15)
-floatBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-floatBtn.Text = "Float"
-floatBtn.TextColor3 = Color3.new(1, 1, 1)
-floatBtn.Font = Enum.Font.GothamBold
-floatBtn.TextSize = 14
-Instance.new("UICorner", floatBtn).CornerRadius = UDim.new(0, 6)
+-- Fly button inside box
+local flyMainBtn = Instance.new("TextButton", box)
+flyMainBtn.Size = UDim2.new(0, 70, 0, 30)
+flyMainBtn.Position = UDim2.new(0, 6, 0.5, -15)
+flyMainBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+flyMainBtn.Text = "Fly"
+flyMainBtn.TextColor3 = Color3.new(1, 1, 1)
+flyMainBtn.Font = Enum.Font.GothamBold
+flyMainBtn.TextSize = 14
+Instance.new("UICorner", flyMainBtn).CornerRadius = UDim.new(0, 6)
 
-local function updateFloatBtn()
-    floatBtn.BackgroundColor3 = Config.Float and Color3.fromRGB(45, 130, 45) or Color3.fromRGB(35, 35, 35)
+local function updateFlyMainBtn()
+    flyMainBtn.BackgroundColor3 = Config.Fly and Color3.fromRGB(45, 130, 45) or Color3.fromRGB(35, 35, 35)
 end
-updateFloatBtn()
+updateFlyMainBtn()
 
-floatBtn.MouseButton1Click:Connect(function()
-    Config.Float = not Config.Float
-    updateFloatBtn()
+flyMainBtn.MouseButton1Click:Connect(function()
+    Config.Fly = not Config.Fly
+    updateFlyMainBtn()
+    updateFlyBtn()
     saveSettings()
 end)
 
--- Gear button inside box (next to float)
+-- Gear button inside box (next to fly)
 local gearBtn = Instance.new("TextButton", box)
 gearBtn.Size = UDim2.new(0, 26, 0, 30)
 gearBtn.Position = UDim2.new(0, 78, 0.5, -15)
@@ -184,13 +184,11 @@ local function makeRow(parent, label, yOff, value, onChange)
     return box
 end
 
-makeRow(settingsPanel, "Float Height", 28, Config.FloatH, function(v) Config.FloatH = v end)
-makeRow(settingsPanel, "Float Speed", 56, Config.FloatS, function(v) Config.FloatS = v end)
-makeRow(settingsPanel, "Fly Height", 84, Config.FlyY, function(v) Config.FlyY = math.max(1, v) end)
-makeRow(settingsPanel, "Fly Speed", 112, Config.FlyS, function(v) Config.FlyS = math.max(1, v) end)
+makeRow(settingsPanel, "Fly Height", 28, Config.FlyY, function(v) Config.FlyY = math.max(1, v) end)
+makeRow(settingsPanel, "Fly Speed", 56, Config.FlyS, function(v) Config.FlyS = math.max(1, v) end)
 
 local flyBtn = Instance.new("TextButton", settingsPanel)
-flyBtn.Size, flyBtn.Position = UDim2.new(1, -16, 0, 24), UDim2.new(0, 8, 0, 140)
+flyBtn.Size, flyBtn.Position = UDim2.new(1, -16, 0, 24), UDim2.new(0, 8, 0, 84)
 flyBtn.Font, flyBtn.TextSize, flyBtn.TextColor3 = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1)
 Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(0, 6)
 
@@ -202,13 +200,14 @@ updateFlyBtn()
 
 flyBtn.MouseButton1Click:Connect(function()
     Config.Fly = not Config.Fly
+    updateFlyMainBtn()
     updateFlyBtn()
     saveSettings()
 end)
 
 -- Anti-Die toggle in settings
 local adBtn = Instance.new("TextButton", settingsPanel)
-adBtn.Size, adBtn.Position = UDim2.new(1, -16, 0, 24), UDim2.new(0, 8, 0, 28 + 140)
+adBtn.Size, adBtn.Position = UDim2.new(1, -16, 0, 24), UDim2.new(0, 8, 0, 112)
 adBtn.Font, adBtn.TextSize, adBtn.TextColor3 = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1)
 Instance.new("UICorner", adBtn).CornerRadius = UDim.new(0, 6)
 
@@ -230,7 +229,6 @@ gearBtn.MouseButton1Click:Connect(function()
 end)
 
 -- Logic Loop
-local fCount = 0
 C.RS.Heartbeat:Connect(function(dt)
     if not hrp or not hum then upd() return end
 
@@ -246,10 +244,6 @@ C.RS.Heartbeat:Connect(function(dt)
             hrp.AssemblyLinearVelocity = Vector3.new(velocity.X, 0, velocity.Z)
             doTpDown()
         end
-    elseif Config.Float then
-        fCount = fCount + dt * Config.FloatS
-        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
-        hrp.CFrame = hrp.CFrame * CFrame.new(0, math.sin(fCount) * (Config.FloatH * 0.05), 0)
     end
 end)
 
