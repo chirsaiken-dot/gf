@@ -1,5 +1,4 @@
--- ============================================================
---   TYRIG HUB  ·  Made By Hesa
+--   TYRIG HUB  ·  Made By Mr Silas
 --   CZ HUB features fully preserved, premium UI redesign
 -- ============================================================
 
@@ -27,7 +26,7 @@ if ANIMATION_MODE == "GUI" and game then
     end
     local t1 = makeTL("TYRIG", 70, -75, Color3.fromRGB(0,230,210), true)
     local t2 = makeTL("HUB", 42, 10,  Color3.fromRGB(80,255,220), true)
-    local t3 = makeTL("Made By Hesa", 22, 62, Color3.fromRGB(160,200,200), false)
+    local t3 = makeTL("Made By Mr Silas", 22, 62, Color3.fromRGB(160,200,200), false)
 
     task.spawn(function()
         local fi = TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
@@ -954,6 +953,7 @@ mainFrame.BackgroundColor3=TH.bg; mainFrame.BackgroundTransparency=0.08; mainFra
 mainFrame.Active=true; mainFrame.ZIndex=10; mainFrame.Visible=false
 Instance.new("UICorner",mainFrame).CornerRadius=UDim.new(0,20)
 local mfStroke=Instance.new("UIStroke",mainFrame); mfStroke.Color=TH.accent; mfStroke.Thickness=1.5; mfStroke.Transparency=0.5
+local mainScale=Instance.new("UIScale",mainFrame); mainScale.Scale=1/3
 
 -- Title bar
 local titleBar=Instance.new("Frame",mainFrame)
@@ -1152,7 +1152,7 @@ do
     s("Info")
     do
         local info=Instance.new("Frame",sc); info.Size=UDim2.new(1,-16,0,60); info.BackgroundColor3=TH.panel2; info.BorderSizePixel=0; info.ZIndex=12; Instance.new("UICorner",info).CornerRadius=UDim.new(0,14); Instance.new("UIStroke",info).Color=TH.divider
-        local il=Instance.new("TextLabel",info); il.Size=UDim2.new(1,-16,1,0); il.Position=UDim2.new(0,8,0,0); il.BackgroundTransparency=1; il.Text="Tyrig Hub\nMade By Hesa\nAll features from CZ Hub preserved"; il.Font=Enum.Font.Gotham; il.TextSize=10; il.TextColor3=TH.muted; il.ZIndex=13; il.TextWrapped=true
+        local il=Instance.new("TextLabel",info); il.Size=UDim2.new(1,-16,1,0); il.Position=UDim2.new(0,8,0,0); il.BackgroundTransparency=1; il.Text="Tyrig Hub\nMade By Mr Silas\nAll features from CZ Hub preserved"; il.Font=Enum.Font.Gotham; il.TextSize=10; il.TextColor3=TH.muted; il.ZIndex=13; il.TextWrapped=true
     end
 end
 
@@ -1359,7 +1359,7 @@ if optimizerEnabled then enableOptimizer() end
 if goodAnimEnabled then task.spawn(startGoodAnim) end
 if medusaCounterEnabled then task.spawn(function() task.wait(1); setupMedusaCounter(player.Character) end) end
 
-print("✅ TYRIG HUB — Made By Hesa — Loaded!")
+print("✅ TYRIG HUB — Made By Mr Silas — Loaded!")
 print("☰ Top-right button = open/close main panel")
 print("🎮 All CZ Hub features preserved 100%")
 print("✨ Animated border buttons — active when ON")
