@@ -64,20 +64,20 @@ local player         = Players.LocalPlayer
 --   COLORS / THEME
 -- ============================================================
 local TH = {
-    bg       = Color3.fromRGB(9, 11, 16),
-    panel    = Color3.fromRGB(13, 16, 23),
-    panel2   = Color3.fromRGB(18, 22, 32),
-    panel3   = Color3.fromRGB(24, 29, 42),
+    bg       = Color3.fromRGB(180, 225, 255),
+    panel    = Color3.fromRGB(165, 215, 250),
+    panel2   = Color3.fromRGB(150, 205, 245),
+    panel3   = Color3.fromRGB(135, 190, 235),
     accent   = Color3.fromRGB(0, 220, 200),
     accent2  = Color3.fromRGB(0, 170, 155),
     green    = Color3.fromRGB(30, 220, 100),
     red      = Color3.fromRGB(220, 55, 55),
-    off      = Color3.fromRGB(36, 40, 54),
-    text     = Color3.fromRGB(220, 225, 235),
-    muted    = Color3.fromRGB(90, 100, 120),
+    off      = Color3.fromRGB(170, 210, 240),
+    text     = Color3.fromRGB(18, 38, 60),
+    muted    = Color3.fromRGB(70, 100, 130),
     gold     = Color3.fromRGB(255, 195, 55),
     purple   = Color3.fromRGB(145, 75, 255),
-    divider  = Color3.fromRGB(25, 30, 44),
+    divider  = Color3.fromRGB(225, 40, 40),
 }
 
 -- ============================================================
@@ -661,7 +661,7 @@ local function makePremiumToggleBtn(parent, label, accent, defaultOn, onToggle)
 
     -- Subtle base stroke (always visible)
     local baseStroke = Instance.new("UIStroke", frame)
-    baseStroke.Color = TH.divider
+    baseStroke.Color = TH.red
     baseStroke.Thickness = 1.5
     baseStroke.Transparency = 0.3
     baseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -740,7 +740,7 @@ local function makePremiumToggleBtn(parent, label, accent, defaultOn, onToggle)
         else
             if spinConn then spinConn:Disconnect(); spinConn=nil end
             stopSpinFn()
-            baseStroke.Color = TH.divider; baseStroke.Thickness = 1.5
+            baseStroke.Color = TH.red; baseStroke.Thickness = 1.5
         end
     end
 
@@ -774,7 +774,7 @@ local function makePremiumActionBtn(parent, label, accent, onPress)
     frame.BorderSizePixel = 0
     frame.ZIndex = 12
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
-    local st = Instance.new("UIStroke", frame); st.Color=accent; st.Thickness=1.5; st.Transparency=0.5
+    local st = Instance.new("UIStroke", frame); st.Color=TH.red; st.Thickness=1.5; st.Transparency=0.5
 
     local lbl = Instance.new("TextLabel", frame)
     lbl.Size = UDim2.new(1,-16,1,0); lbl.Position=UDim2.new(0,16,0,0); lbl.BackgroundTransparency=1
@@ -811,7 +811,7 @@ local function makePremiumValueRow(parent, label, defaultVal, onChanged)
     frame.BorderSizePixel = 0
     frame.ZIndex = 12
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-    Instance.new("UIStroke", frame).Color = TH.divider
+    Instance.new("UIStroke", frame).Color = TH.red
 
     local lbl = Instance.new("TextLabel", frame)
     lbl.Size = UDim2.new(0.55,0,1,0); lbl.Position=UDim2.new(0,14,0,0); lbl.BackgroundTransparency=1
@@ -821,7 +821,7 @@ local function makePremiumValueRow(parent, label, defaultVal, onChanged)
     local boxBg = Instance.new("Frame", frame)
     boxBg.Size=UDim2.new(0,72,0,26); boxBg.Position=UDim2.new(1,-80,0.5,-13); boxBg.BackgroundColor3=TH.panel3; boxBg.BorderSizePixel=0; boxBg.ZIndex=13
     Instance.new("UICorner",boxBg).CornerRadius=UDim.new(0,9)
-    local bst=Instance.new("UIStroke",boxBg); bst.Color=TH.accent; bst.Transparency=0.5
+    local bst=Instance.new("UIStroke",boxBg); bst.Color=TH.red; bst.Transparency=0.5
 
     local vb = Instance.new("TextBox", boxBg)
     vb.Size=UDim2.new(1,0,1,0); vb.BackgroundTransparency=1; vb.Text=tostring(defaultVal)
@@ -830,7 +830,7 @@ local function makePremiumValueRow(parent, label, defaultVal, onChanged)
         local n=tonumber(vb.Text); if n then if onChanged then onChanged(n,vb) end; bst.Transparency=0.5
         else vb.Text=tostring(defaultVal) end
     end)
-    vb.Focused:Connect(function() bst.Transparency=0; bst.Color=TH.accent end)
+    vb.Focused:Connect(function() bst.Transparency=0; bst.Color=TH.red end)
     return vb
 end
 
@@ -859,12 +859,12 @@ local function makeKeybindRow(parent, label, kbKey)
     local frame = Instance.new("Frame", parent)
     frame.Size=UDim2.new(1,-16,0,40); frame.BackgroundColor3=TH.panel2; frame.BorderSizePixel=0; frame.ZIndex=12
     Instance.new("UICorner",frame).CornerRadius=UDim.new(0,12)
-    Instance.new("UIStroke",frame).Color=TH.divider
+    Instance.new("UIStroke",frame).Color=TH.red
 
     local lbl=Instance.new("TextLabel",frame); lbl.Size=UDim2.new(0.6,0,1,0); lbl.Position=UDim2.new(0,14,0,0); lbl.BackgroundTransparency=1; lbl.Text=label; lbl.Font=Enum.Font.GothamSemibold; lbl.TextSize=11; lbl.TextColor3=TH.text; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=13
 
     local kbBtn=Instance.new("TextButton",frame); kbBtn.Size=UDim2.new(0,72,0,24); kbBtn.Position=UDim2.new(1,-80,0.5,-12); kbBtn.BackgroundColor3=TH.panel3; kbBtn.Text=(Keybinds[kbKey] and Keybinds[kbKey]~=Enum.KeyCode.Unknown) and Keybinds[kbKey].Name or "—"; kbBtn.TextColor3=TH.accent; kbBtn.Font=Enum.Font.GothamBold; kbBtn.TextSize=10; kbBtn.BorderSizePixel=0; kbBtn.ZIndex=13
-    Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,8); local ks=Instance.new("UIStroke",kbBtn); ks.Color=TH.accent; ks.Transparency=0.4
+    Instance.new("UICorner",kbBtn).CornerRadius=UDim.new(0,8); local ks=Instance.new("UIStroke",kbBtn); ks.Color=TH.red; ks.Transparency=0.4
 
     local waiting=false
     kbBtn.MouseButton1Click:Connect(function()
@@ -884,7 +884,7 @@ local function makeSpeedModeSelector(parent)
     local frame = Instance.new("Frame", parent)
     frame.Size=UDim2.new(1,-16,0,70); frame.BackgroundColor3=TH.panel2; frame.BorderSizePixel=0; frame.ZIndex=12
     Instance.new("UICorner",frame).CornerRadius=UDim.new(0,14)
-    Instance.new("UIStroke",frame).Color=TH.divider
+    Instance.new("UIStroke",frame).Color=TH.red
 
     local hdr=Instance.new("TextLabel",frame); hdr.Size=UDim2.new(1,0,0,24); hdr.Position=UDim2.new(0,14,0,0); hdr.BackgroundTransparency=1; hdr.Text="SPEED MODE"; hdr.Font=Enum.Font.GothamBlack; hdr.TextSize=10; hdr.TextColor3=TH.muted; hdr.TextXAlignment=Enum.TextXAlignment.Left; hdr.ZIndex=13
 
@@ -949,7 +949,7 @@ end
 -- ============================================================
 local mainFrame = Instance.new("Frame", ROOT)
 mainFrame.Size=UDim2.new(0,520,0,520); mainFrame.Position=UDim2.new(0,10,0,60)
-mainFrame.BackgroundColor3=TH.bg; mainFrame.BackgroundTransparency=0.08; mainFrame.BorderSizePixel=0
+mainFrame.BackgroundColor3=TH.bg; mainFrame.BackgroundTransparency=0.59; mainFrame.BorderSizePixel=0
 mainFrame.Active=true; mainFrame.ZIndex=10; mainFrame.Visible=false
 Instance.new("UICorner",mainFrame).CornerRadius=UDim.new(0,20)
 local mfStroke=Instance.new("UIStroke",mainFrame); mfStroke.Color=TH.accent; mfStroke.Thickness=1.5; mfStroke.Transparency=0.5
@@ -1188,7 +1188,7 @@ local function makeFloatBtn(id, line1, line2, defX, defY, accent, onToggle, isAc
     btn.BackgroundColor3=Color3.fromRGB(10,12,18); btn.BackgroundTransparency=0; btn.BorderSizePixel=0; btn.Text=""; btn.ZIndex=22; btn.Active=true
     Instance.new("UICorner",btn).CornerRadius=UDim.new(0,16)
 
-    local baseStroke=Instance.new("UIStroke",btn); baseStroke.Color=TH.divider; baseStroke.Thickness=1.5; baseStroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
+    local baseStroke=Instance.new("UIStroke",btn); baseStroke.Color=TH.red; baseStroke.Thickness=1.5; baseStroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
 
     local dot=Instance.new("Frame",btn); dot.Size=UDim2.new(0,8,0,8); dot.Position=UDim2.new(0,10,0,10); dot.BackgroundColor3=TH.muted; dot.BorderSizePixel=0; dot.ZIndex=23; Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
 
@@ -1300,8 +1300,8 @@ end
 hamBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible=not mainFrame.Visible
     if mainFrame.Visible then
-        mainFrame.BackgroundTransparency=0.3
-        TweenService:Create(mainFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quad),{BackgroundTransparency=0.08}):Play()
+        mainFrame.BackgroundTransparency=0.75
+        TweenService:Create(mainFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quad),{BackgroundTransparency=0.59}):Play()
     end
 end)
 makeDraggable(hamBtn)
