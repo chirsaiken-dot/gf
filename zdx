@@ -2,6 +2,30 @@
 -- ORRXL4 HUB (ACTUALIZADO)
 -- =========================
 
+-- Anti-Kick (loadstring protection)
+pcall(function()
+    local mt = getrawmetatable(game)
+    local oldNamecall = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method == "Kick" and self == game:GetService("Players").LocalPlayer then
+            return
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt, true)
+end)
+
+-- Prevent idle kick
+pcall(function()
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), CFrame.new())
+        task.wait(1)
+        game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), CFrame.new())
+    end)
+end)
+
 local noWalkConnection1
 local noWalkConnection2
 local lastPos
@@ -20,8 +44,6 @@ local FolderName = "Tyriq Hub"
 local FileName = FolderName.."/tyriqconfig.json"
 
 local Config = {
-
-    ["Safe Mode"] = true,
 
     ["Super Jump"] = false,
     ["FOV"] = false,
@@ -134,29 +156,6 @@ local Config = {
     ["AutoPlay Point5 Z"] = 1
 }
 
-local RISKY_TOGGLES = {
-    ["Instant Grab"] = true,
-    ["Fling"] = true,
-    ["Lock Target"] = true,
-    ["Auto Medusa"] = true,
-    ["Melee Aimbot"] = true,
-    ["TP Down"] = true,
-    ["Manual TP"] = true,
-    ["Auto Bat"] = true,
-    ["Drop Brainrot"] = true,
-    ["Super Jump"] = true,
-    ["No Player Collision"] = true,
-    ["Auto Exit Duel"] = true
-}
-
-local function isSafeMode()
-    return Config["Safe Mode"] == true
-end
-
-local function isBlockedBySafeMode(toggleName)
-    return isSafeMode() and RISKY_TOGGLES[toggleName] == true
-end
-
 if not isfolder(FolderName) then
     makefolder(FolderName)
 end
@@ -190,17 +189,10 @@ task.spawn(function()
     task.wait(1)
 
     for text, enabled in pairs(Config) do
-        if enabled and isBlockedBySafeMode(text) then
-            Config[text] = false
-            enabled = false
-        end
-
         if enabled then
             ApplyToggle(text, true)
         end
     end
-
-    SaveConfig()
 end)
 
 local playActive = false
@@ -3783,11 +3775,6 @@ radioTextbox = textbox
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
 
     local enabled = Config[text] or false
-    if isBlockedBySafeMode(text) and enabled then
-        enabled = false
-        Config[text] = false
-        SaveConfig()
-    end
 
 -- Aplicar estado visual al cargar
 task.defer(function()
@@ -3802,11 +3789,6 @@ task.defer(function()
 end)
 
     button.MouseButton1Click:Connect(function()
-        if isBlockedBySafeMode(text) then
-            warn("[SAFE MODE] Blocked toggle: " .. text)
-            return
-        end
-
         enabled = not enabled
         if enabled then
             TweenService:Create(button, TweenInfo.new(0.25), {BackgroundColor3 = BUTTON_BLUE}):Play()
@@ -4447,14 +4429,6 @@ local enabled = false
 
 button.MouseButton1Click:Connect(function()  
 
-if isSafeMode() then
-    enabled = false
-    disableServerPos()
-    button.Text = "Desync : OFF"
-    warn("[SAFE MODE] Desync is disabled")
-    return
-end
-
 enabled = not enabled  
 
 if enabled then  
@@ -4800,11 +4774,6 @@ task.spawn(function()
     local char = lp.Character or lp.CharacterAdded:Wait()
 
 for text,enabled in pairs(Config) do
-    if enabled and isBlockedBySafeMode(text) then
-        Config[text] = false
-        enabled = false
-    end
-
     if enabled then
 
         task.spawn(function()
@@ -5297,13 +5266,7 @@ end
 end
 end)
 
-SaveConfig()
-
 task.spawn(function()
-
-    if isSafeMode() then
-        return
-    end
 
     if game:GetService("CoreGui"):FindFirstChild("TauntButtonGui") then
         game:GetService("CoreGui").TauntButtonGui:Destroy()
@@ -5373,10 +5336,6 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-
-    if isSafeMode() then
-        return
-    end
 
     if game:GetService("CoreGui"):FindFirstChild("LaggerButtonGui") then
         game:GetService("CoreGui").LaggerButtonGui:Destroy()
