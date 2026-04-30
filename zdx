@@ -4,19 +4,17 @@ local ToggleButton = Instance.new("TextButton")
 local TextLabel = Instance.new("TextLabel")
 local HideButton = Instance.new("TextButton")
 local PowerLabel = Instance.new("TextLabel")
-local PowerSlider = Instance.new("TextButton")
-local PowerBar = Instance.new("Frame")
 local HeightLabel = Instance.new("TextLabel")
-local HeightSlider = Instance.new("TextButton")
-local HeightBar = Instance.new("Frame")
 local SpeedLabel = Instance.new("TextLabel")
-local SpeedSlider = Instance.new("TextButton")
-local SpeedBar = Instance.new("Frame")
 local PosLabel = Instance.new("TextLabel")
 local PosXBox = Instance.new("TextBox")
 local PosYBox = Instance.new("TextBox")
 local PosZBox = Instance.new("TextBox")
 local SetPosButton = Instance.new("TextButton")
+local SitButton = Instance.new("TextButton")
+local PowerBox = Instance.new("TextBox")
+local HeightBox = Instance.new("TextBox")
+local SpeedBox = Instance.new("TextBox")
 local UICorner = Instance.new("UICorner")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -25,7 +23,7 @@ ScreenGui.ResetOnSpawn = false
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.Position = UDim2.new(0.35, 0, 0.4, 0)
-Frame.Size = UDim2.new(0, 260, 0, 320)
+Frame.Size = UDim2.new(0, 260, 0, 360)
 Frame.Active = true
 Frame.Draggable = true
 UICorner.Parent = Frame
@@ -100,64 +98,75 @@ SetPosButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 SetPosButton.TextSize = 18
 UICorner:Clone().Parent = SetPosButton
 
+SitButton.Parent = Frame
+SitButton.Position = UDim2.new(0, 20, 0, 170)
+SitButton.Size = UDim2.new(1, -40, 0, 28)
+SitButton.Font = Enum.Font.SourceSansBold
+SitButton.Text = "SIT"
+SitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SitButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+SitButton.TextSize = 18
+UICorner:Clone().Parent = SitButton
+
 PowerLabel.Parent = Frame
 PowerLabel.BackgroundTransparency = 1
-PowerLabel.Position = UDim2.new(0, 20, 0, 172)
-PowerLabel.Size = UDim2.new(1, -40, 0, 20)
+PowerLabel.Position = UDim2.new(0, 20, 0, 204)
+PowerLabel.Size = UDim2.new(0, 120, 0, 20)
 PowerLabel.Font = Enum.Font.SourceSansBold
 PowerLabel.Text = "Fling Power: 10000"
 PowerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 PowerLabel.TextSize = 18
 
-PowerBar.Parent = Frame
-PowerBar.Position = UDim2.new(0, 20, 0, 196)
-PowerBar.Size = UDim2.new(1, -40, 0, 16)
-PowerBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-UICorner:Clone().Parent = PowerBar
-PowerSlider.Parent = PowerBar
-PowerSlider.Size = UDim2.new(0.1, 0, 1, 0)
-PowerSlider.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-UICorner:Clone().Parent = PowerSlider
+PowerBox.Parent = Frame
+PowerBox.Position = UDim2.new(1, -100, 0, 200)
+PowerBox.Size = UDim2.new(0, 80, 0, 28)
+PowerBox.Font = Enum.Font.SourceSansBold
+PowerBox.Text = "10000"
+PowerBox.PlaceholderText = "Power"
+PowerBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+PowerBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PowerBox.TextSize = 16
+UICorner:Clone().Parent = PowerBox
 
 HeightLabel.Parent = Frame
 HeightLabel.BackgroundTransparency = 1
-HeightLabel.Position = UDim2.new(0, 20, 0, 220)
-HeightLabel.Size = UDim2.new(1, -40, 0, 20)
+HeightLabel.Position = UDim2.new(0, 20, 0, 240)
+HeightLabel.Size = UDim2.new(0, 120, 0, 20)
 HeightLabel.Font = Enum.Font.SourceSansBold
 HeightLabel.Text = "Height: 30"
 HeightLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 HeightLabel.TextSize = 18
 
-HeightBar.Parent = Frame
-HeightBar.Position = UDim2.new(0, 20, 0, 244)
-HeightBar.Size = UDim2.new(1, -40, 0, 16)
-HeightBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-UICorner:Clone().Parent = HeightBar
-
-HeightSlider.Parent = HeightBar
-HeightSlider.Size = UDim2.new(0.15, 0, 1, 0)
-HeightSlider.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
-UICorner:Clone().Parent = HeightSlider
+HeightBox.Parent = Frame
+HeightBox.Position = UDim2.new(1, -100, 0, 236)
+HeightBox.Size = UDim2.new(0, 80, 0, 28)
+HeightBox.Font = Enum.Font.SourceSansBold
+HeightBox.Text = "30"
+HeightBox.PlaceholderText = "Height"
+HeightBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+HeightBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+HeightBox.TextSize = 16
+UICorner:Clone().Parent = HeightBox
 
 SpeedLabel.Parent = Frame
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Position = UDim2.new(0, 20, 0, 268)
-SpeedLabel.Size = UDim2.new(1, -40, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 20, 0, 276)
+SpeedLabel.Size = UDim2.new(0, 120, 0, 20)
 SpeedLabel.Font = Enum.Font.SourceSansBold
 SpeedLabel.Text = "Speed: 120"
 SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedLabel.TextSize = 18
 
-SpeedBar.Parent = Frame
-SpeedBar.Position = UDim2.new(0, 20, 0, 292)
-SpeedBar.Size = UDim2.new(1, -40, 0, 16)
-SpeedBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-UICorner:Clone().Parent = SpeedBar
-
-SpeedSlider.Parent = SpeedBar
-SpeedSlider.Size = UDim2.new(0.2, 0, 1, 0)
-SpeedSlider.BackgroundColor3 = Color3.fromRGB(0, 220, 120)
-UICorner:Clone().Parent = SpeedSlider
+SpeedBox.Parent = Frame
+SpeedBox.Position = UDim2.new(1, -100, 0, 272)
+SpeedBox.Size = UDim2.new(0, 80, 0, 28)
+SpeedBox.Font = Enum.Font.SourceSansBold
+SpeedBox.Text = "120"
+SpeedBox.PlaceholderText = "Speed"
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SpeedBox.TextSize = 16
+UICorner:Clone().Parent = SpeedBox
 
 HideButton.Parent = ScreenGui
 HideButton.Position = UDim2.new(0.05, 0, 0.9, 0)
@@ -178,9 +187,6 @@ local flingHeight = 30
 local flingSpeed = 120
 local targetPosition = Vector3.zero
 local lp = Players.LocalPlayer
-local powerDragging = false
-local heightDragging = false
-local speedDragging = false
 
 if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 	local detection = Instance.new("Decal")
@@ -188,9 +194,32 @@ if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 	detection.Parent = ReplicatedStorage
 end
 
-local function setSliderPosition(slider, value, minValue, maxValue)
-	local alpha = math.clamp((value - minValue) / (maxValue - minValue), 0, 1)
-	slider.Position = UDim2.new(alpha, 0, 0, 0)
+local function getHumanoid()
+	local character = lp.Character
+	return character and character:FindFirstChildOfClass("Humanoid")
+end
+
+local function applySettingsFromBoxes()
+	local newPower = tonumber(PowerBox.Text)
+	local newHeight = tonumber(HeightBox.Text)
+	local newSpeed = tonumber(SpeedBox.Text)
+
+	if newPower then
+		flingPower = math.clamp(math.floor(newPower), 1000, 100000)
+	end
+	if newHeight then
+		flingHeight = math.clamp(math.floor(newHeight), 0, 300)
+	end
+	if newSpeed then
+		flingSpeed = math.clamp(math.floor(newSpeed), 0, 500)
+	end
+
+	PowerBox.Text = tostring(flingPower)
+	HeightBox.Text = tostring(flingHeight)
+	SpeedBox.Text = tostring(flingSpeed)
+	PowerLabel.Text = "Fling Power: " .. flingPower
+	HeightLabel.Text = "Height: " .. flingHeight
+	SpeedLabel.Text = "Speed: " .. flingSpeed
 end
 
 local function syncTargetPosition()
@@ -222,6 +251,11 @@ local function fling()
 			end
 
 			if hiddenfling then
+				local humanoid = getHumanoid()
+				if humanoid then
+					humanoid.Sit = true
+				end
+
 				local target = Vector3.new(targetPosition.X, targetPosition.Y + flingHeight, targetPosition.Z)
 				local delta = target - hrp.Position
 				local flatDelta = Vector3.new(delta.X, 0, delta.Z)
@@ -241,6 +275,11 @@ local function fling()
 					hrp.Velocity = Vector3.new(horizontalVelocity.X, movel, horizontalVelocity.Z)
 					movel = movel * -1
 				end
+			end
+		else
+			local humanoid = getHumanoid()
+			if humanoid and humanoid.Sit then
+				humanoid.Sit = false
 			end
 		end
 	end
@@ -266,39 +305,10 @@ HideButton.MouseButton1Click:Connect(function()
 	end
 end)
 
-PowerSlider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		powerDragging = true
-	end
-end)
-
-PowerSlider.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		powerDragging = false
-	end
-end)
-
-HeightSlider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		heightDragging = true
-	end
-end)
-
-HeightSlider.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		heightDragging = false
-	end
-end)
-
-SpeedSlider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		speedDragging = true
-	end
-end)
-
-SpeedSlider.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		speedDragging = false
+SitButton.MouseButton1Click:Connect(function()
+	local humanoid = getHumanoid()
+	if humanoid then
+		humanoid.Sit = true
 	end
 end)
 
@@ -313,40 +323,10 @@ end)
 PosXBox.FocusLost:Connect(syncTargetPosition)
 PosYBox.FocusLost:Connect(syncTargetPosition)
 PosZBox.FocusLost:Connect(syncTargetPosition)
+PowerBox.FocusLost:Connect(applySettingsFromBoxes)
+HeightBox.FocusLost:Connect(applySettingsFromBoxes)
+SpeedBox.FocusLost:Connect(applySettingsFromBoxes)
 
-UserInputService.InputChanged:Connect(function(input)
-	if powerDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local mousePos = input.Position.X
-		local barPos = PowerBar.AbsolutePosition.X
-		local barSize = PowerBar.AbsoluteSize.X
-		local newPos = math.clamp((mousePos - barPos) / barSize, 0, 1)
-		
-		PowerSlider.Position = UDim2.new(newPos, 0, 0, 0)
-		flingPower = math.floor(newPos * 50000) + 5000
-		PowerLabel.Text = "Fling Power: " .. flingPower
-	elseif heightDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local mousePos = input.Position.X
-		local barPos = HeightBar.AbsolutePosition.X
-		local barSize = HeightBar.AbsoluteSize.X
-		local newPos = math.clamp((mousePos - barPos) / barSize, 0, 1)
-
-		HeightSlider.Position = UDim2.new(newPos, 0, 0, 0)
-		flingHeight = math.floor(newPos * 150) + 10
-		HeightLabel.Text = "Height: " .. flingHeight
-	elseif speedDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local mousePos = input.Position.X
-		local barPos = SpeedBar.AbsolutePosition.X
-		local barSize = SpeedBar.AbsoluteSize.X
-		local newPos = math.clamp((mousePos - barPos) / barSize, 0, 1)
-
-		SpeedSlider.Position = UDim2.new(newPos, 0, 0, 0)
-		flingSpeed = math.floor(newPos * 280) + 20
-		SpeedLabel.Text = "Speed: " .. flingSpeed
-	end
-end)
-
-setSliderPosition(PowerSlider, flingPower, 5000, 55000)
-setSliderPosition(HeightSlider, flingHeight, 10, 160)
-setSliderPosition(SpeedSlider, flingSpeed, 20, 300)
+applySettingsFromBoxes()
 
 fling()
