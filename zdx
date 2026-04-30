@@ -9,6 +9,7 @@ local Frame = Instance.new("Frame")
 local TitleLabel = Instance.new("TextLabel")
 local ToggleButton = Instance.new("TextButton")
 local ModeButton = Instance.new("TextButton")
+local AntiDieButton = Instance.new("TextButton")
 local PosLabel = Instance.new("TextLabel")
 local PosXBox = Instance.new("TextBox")
 local PosYBox = Instance.new("TextBox")
@@ -54,13 +55,23 @@ UICorner:Clone().Parent = ToggleButton
 
 ModeButton.Parent = Frame
 ModeButton.Position = UDim2.new(0, 16, 0, 70)
-ModeButton.Size = UDim2.new(1, -32, 0, 28)
+ModeButton.Size = UDim2.new(0, 98, 0, 28)
 ModeButton.Font = Enum.Font.SourceSansBold
 ModeButton.Text = "MODE: FLY"
 ModeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ModeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ModeButton.TextSize = 18
 UICorner:Clone().Parent = ModeButton
+
+AntiDieButton.Parent = Frame
+AntiDieButton.Position = UDim2.new(0, 121, 0, 70)
+AntiDieButton.Size = UDim2.new(0, 98, 0, 28)
+AntiDieButton.Font = Enum.Font.SourceSansBold
+AntiDieButton.Text = "ANTI DIE: OFF"
+AntiDieButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AntiDieButton.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+AntiDieButton.TextSize = 16
+UICorner:Clone().Parent = AntiDieButton
 
 PosLabel.Parent = Frame
 PosLabel.BackgroundTransparency = 1
@@ -172,6 +183,9 @@ local dodgeModeIndex = 1
 local dodgeBusy = false
 local lastDodgeTime = 0
 local dodgeCooldown = 0.8
+local antiDieEnabled = false
+local antiDieHealthConn = nil
+local antiDieCharConn = nil
 
 local function getCharacterParts()
 	local character = LocalPlayer.Character
@@ -182,6 +196,61 @@ local function getCharacterParts()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	return humanoid, hrp
+end
+
+local function disconnectAntiDieHealthConn()
+	if antiDieHealthConn then
+		antiDieHealthConn:Disconnect()
+		antiDieHealthConn = nil
+	end
+end
+
+local function applyAntiDieToHumanoid(humanoid)
+	if not humanoid then
+		return
+	end
+
+	disconnectAntiDieHealthConn()
+
+	pcall(function()
+		humanoid.BreakJointsOnDeath = false
+	end)
+	pcall(function()
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+	end)
+
+	if humanoid.Health < humanoid.MaxHealth then
+		humanoid.Health = humanoid.MaxHealth
+	end
+
+	antiDieHealthConn = humanoid.HealthChanged:Connect(function(health)
+		if not antiDieEnabled then
+			return
+		end
+		if health <= math.max(1, humanoid.MaxHealth * 0.15) then
+			humanoid.Health = humanoid.MaxHealth
+		end
+	end)
+end
+
+local function setAntiDieEnabled(state)
+	antiDieEnabled = state
+	if state then
+		AntiDieButton.Text = "ANTI DIE: ON"
+		AntiDieButton.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+		local humanoid = getCharacterParts()
+		applyAntiDieToHumanoid(humanoid)
+	else
+		AntiDieButton.Text = "ANTI DIE: OFF"
+		AntiDieButton.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+		disconnectAntiDieHealthConn()
+		local humanoid = getCharacterParts()
+		if humanoid then
+			pcall(function()
+				humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+			end)
+		end
+	end
 end
 
 local function getRightVector(flatDirection)
@@ -372,6 +441,10 @@ ToggleButton.MouseButton1Click:Connect(function()
 	end
 end)
 
+AntiDieButton.MouseButton1Click:Connect(function()
+	setAntiDieEnabled(not antiDieEnabled)
+end)
+
 ModeButton.MouseButton1Click:Connect(function()
 	dodgeModeIndex = dodgeModeIndex + 1
 	if dodgeModeIndex > #dodgeModes then
@@ -396,6 +469,13 @@ PosYBox.FocusLost:Connect(syncTargetPosition)
 PosZBox.FocusLost:Connect(syncTargetPosition)
 RadiusBox.FocusLost:Connect(applySettings)
 SpeedBox.FocusLost:Connect(applySettings)
+
+antiDieCharConn = LocalPlayer.CharacterAdded:Connect(function(character)
+	if antiDieEnabled then
+		local humanoid = character:WaitForChild("Humanoid", 5)
+		applyAntiDieToHumanoid(humanoid)
+	end
+end)
 
 RunService.Heartbeat:Connect(function()
 	if not dodgeEnabled or dodgeBusy or not targetPosition then
