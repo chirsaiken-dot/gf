@@ -240,6 +240,7 @@ end
 
 local function fling()
 	local hrp, c, movel = nil, nil, 0.1
+	local arriveRadius = 12
 	
 	while true do
 		RunService.Heartbeat:Wait()
@@ -256,23 +257,36 @@ local function fling()
 					humanoid.Sit = true
 				end
 
-				local target = Vector3.new(targetPosition.X, targetPosition.Y + flingHeight, targetPosition.Z)
+				local target = targetPosition
 				local delta = target - hrp.Position
 				local flatDelta = Vector3.new(delta.X, 0, delta.Z)
 				local horizontalVelocity = Vector3.zero
 
-				if flatDelta.Magnitude > 0.5 then
-					horizontalVelocity = flatDelta.Unit * flingSpeed
+				if flatDelta.Magnitude <= arriveRadius then
+					hiddenfling = false
+					ToggleButton.Text = "OFF"
+					ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+					if humanoid then
+						humanoid.Sit = false
+					end
+					hrp.Velocity = Vector3.zero
+					continue
 				end
 
-				hrp.Velocity = Vector3.new(horizontalVelocity.X, flingPower + math.clamp(delta.Y, -flingHeight, flingHeight), horizontalVelocity.Z)
+				if flatDelta.Magnitude > 0.5 then
+					local throwSpeed = math.max(flingSpeed, math.min(flatDelta.Magnitude * 2.5, flingSpeed * 2))
+					horizontalVelocity = flatDelta.Unit * throwSpeed
+				end
+
+				local verticalVelocity = flingHeight + flingPower * 0.15
+				hrp.Velocity = Vector3.new(horizontalVelocity.X, verticalVelocity, horizontalVelocity.Z)
 				RunService.RenderStepped:Wait()
 				if c and c.Parent and hrp and hrp.Parent then
-					hrp.Velocity = Vector3.new(horizontalVelocity.X, 0, horizontalVelocity.Z)
+					hrp.Velocity = Vector3.new(horizontalVelocity.X, movel, horizontalVelocity.Z)
 				end
 				RunService.Stepped:Wait()
 				if c and c.Parent and hrp and hrp.Parent then
-					hrp.Velocity = Vector3.new(horizontalVelocity.X, movel, horizontalVelocity.Z)
+					hrp.Velocity = Vector3.new(horizontalVelocity.X, -movel, horizontalVelocity.Z)
 					movel = movel * -1
 				end
 			end
