@@ -107,6 +107,14 @@ local Config = {
     ["Steal Speed Value"] = 29,
     ["Jump Value"] = 60,
 
+    ["Speed Mode"] = "Normal",
+    ["Normal Speed Value"] = 53,
+    ["Normal Steal Speed Value"] = 29,
+    ["Normal Jump Value"] = 60,
+    ["Desync Speed Value"] = 65,
+    ["Desync Steal Speed Value"] = 34,
+    ["Desync Jump Value"] = 70,
+
     ["AutoPlay Speed"] = 51,
     ["AutoPlay StealSpeed"] = 29,
     ["AutoPlay Cooldown"] = 0.1,
@@ -1884,7 +1892,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,220)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -2050,15 +2058,99 @@ local function createRow(text,posY,default)
 
 end
 
+local speedMode = (Config["Speed Mode"] == "Desync") and "Desync" or "Normal"
+
+local function getModePrefix()
+    return speedMode == "Desync" and "Desync" or "Normal"
+end
+
+local function getModeKey(base)
+    return getModePrefix() .. " " .. base
+end
+
+local function modeValue(base, fallback)
+    local v = Config[getModeKey(base)]
+    if v == nil then
+        v = Config[fallback]
+    end
+    return v
+end
+
+Config["Normal Speed Value"] = Config["Normal Speed Value"] or Config["Speed Value"] or 53
+Config["Normal Steal Speed Value"] = Config["Normal Steal Speed Value"] or Config["Steal Speed Value"] or 29
+Config["Normal Jump Value"] = Config["Normal Jump Value"] or Config["Jump Value"] or 60
+Config["Desync Speed Value"] = Config["Desync Speed Value"] or 65
+Config["Desync Steal Speed Value"] = Config["Desync Steal Speed Value"] or 34
+Config["Desync Jump Value"] = Config["Desync Jump Value"] or 70
+
+local modeContainer = Instance.new("Frame")
+modeContainer.Size = UDim2.new(1,-20,0,26)
+modeContainer.Position = UDim2.new(0,10,0,70)
+modeContainer.BackgroundTransparency = 1
+modeContainer.Parent = main
+
+local modeNormalBtn = Instance.new("TextButton")
+modeNormalBtn.Size = UDim2.new(0.5,-4,1,0)
+modeNormalBtn.Position = UDim2.new(0,0,0,0)
+modeNormalBtn.BackgroundColor3 = BUTTON_BLUE
+modeNormalBtn.Text = "Normal"
+modeNormalBtn.TextColor3 = Color3.fromRGB(255,255,255)
+modeNormalBtn.Font = Enum.Font.GothamBold
+modeNormalBtn.TextSize = 12
+modeNormalBtn.Parent = modeContainer
+Instance.new("UICorner", modeNormalBtn).CornerRadius = UDim.new(0,6)
+
+local modeDesyncBtn = Instance.new("TextButton")
+modeDesyncBtn.Size = UDim2.new(0.5,-4,1,0)
+modeDesyncBtn.Position = UDim2.new(0.5,4,0,0)
+modeDesyncBtn.BackgroundColor3 = BUTTON_BLUE
+modeDesyncBtn.Text = "Desync"
+modeDesyncBtn.TextColor3 = Color3.fromRGB(255,255,255)
+modeDesyncBtn.Font = Enum.Font.GothamBold
+modeDesyncBtn.TextSize = 12
+modeDesyncBtn.Parent = modeContainer
+Instance.new("UICorner", modeDesyncBtn).CornerRadius = UDim.new(0,6)
+
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
+local speedBox, speedLabel = createRow("Speed",105,53)
+local stealBox, stealLabel = createRow("Steal Speed",140,29)
+local jumpBox, jumpLabel = createRow("Jump",175,60)
 
-speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
-jumpBox.Text = tostring(Config["Jump Value"])
+local function refreshModeButtons()
+    if speedMode == "Desync" then
+        modeNormalBtn.BackgroundTransparency = 0.35
+        modeDesyncBtn.BackgroundTransparency = 0
+    else
+        modeNormalBtn.BackgroundTransparency = 0
+        modeDesyncBtn.BackgroundTransparency = 0.35
+    end
+end
+
+local function loadModeValuesToBoxes()
+    speedBox.Text = tostring(modeValue("Speed Value", "Speed Value") or 53)
+    stealBox.Text = tostring(modeValue("Steal Speed Value", "Steal Speed Value") or 29)
+    jumpBox.Text = tostring(modeValue("Jump Value", "Jump Value") or 60)
+end
+
+local function setMode(newMode)
+    speedMode = newMode
+    Config["Speed Mode"] = speedMode
+    loadModeValuesToBoxes()
+    refreshModeButtons()
+    SaveConfig()
+end
+
+modeNormalBtn.MouseButton1Click:Connect(function()
+    setMode("Normal")
+end)
+
+modeDesyncBtn.MouseButton1Click:Connect(function()
+    setMode("Desync")
+end)
+
+loadModeValuesToBoxes()
+refreshModeButtons()
 
 --// VALUES
 
@@ -2074,7 +2166,7 @@ local jumpValue = 50
 
 --// SANITIZE
 
-local function applyInput(box,min,max,default,key)
+local function applyInput(box,min,max,default,getKey)
 
 box.FocusLost:Connect(function()
 
@@ -2084,16 +2176,24 @@ num = math.clamp(num,min,max)
 
 box.Text = tostring(num)
 
-Config[key] = num
+Config[getKey()] = num
 SaveConfig()
 
 end)
 
 end
 
-applyInput(speedBox,15,200,53,"Speed Value")
-applyInput(stealBox,15,200,29,"Steal Speed Value")
-applyInput(jumpBox,50,200,60,"Jump Value")
+applyInput(speedBox,15,200,53,function()
+    return getModeKey("Speed Value")
+end)
+
+applyInput(stealBox,15,200,29,function()
+    return getModeKey("Steal Speed Value")
+end)
+
+applyInput(jumpBox,50,200,60,function()
+    return getModeKey("Jump Value")
+end)
 
 --// BOTÓN LÓGICA 
 
@@ -2242,6 +2342,7 @@ end)
 -- ======================
 
 local elementsToHide = {
+modeContainer,
 speedBox,
 stealBox,
 jumpBox,
@@ -2291,7 +2392,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,220)}
 )
 
 tween:Play()
@@ -2533,17 +2634,33 @@ local function applyDropGoodAnims(char)
 
     saveDropOriginalAnims(animate)
 
-    pcall(function()
-        animate.idle.Animation1.AnimationId = dropGoodAnims.idle[1]
-        animate.idle.Animation2.AnimationId = dropGoodAnims.idle[2]
-        animate.walk.WalkAnim.AnimationId = dropGoodAnims.walk
-        animate.run.RunAnim.AnimationId = dropGoodAnims.run
-        animate.jump.JumpAnim.AnimationId = dropGoodAnims.jump
-        animate.fall.FallAnim.AnimationId = dropGoodAnims.fall
-        animate.climb.ClimbAnim.AnimationId = dropGoodAnims.climb
-    end)
+    local changed = false
 
-    return true
+    local function setAnim(path, childName, animId)
+        local folder = animate:FindFirstChild(path)
+        if not folder then return end
+        local anim = folder:FindFirstChild(childName)
+        if not anim or not anim:IsA("Animation") then return end
+        anim.AnimationId = animId
+        changed = true
+    end
+
+    setAnim("idle", "Animation1", dropGoodAnims.idle[1])
+    setAnim("idle", "Animation2", dropGoodAnims.idle[2])
+    setAnim("walk", "WalkAnim", dropGoodAnims.walk)
+    setAnim("run", "RunAnim", dropGoodAnims.run)
+    setAnim("jump", "JumpAnim", dropGoodAnims.jump)
+    setAnim("fall", "FallAnim", dropGoodAnims.fall)
+    setAnim("climb", "ClimbAnim", dropGoodAnims.climb)
+
+    if changed then
+        local wasDisabled = animate.Disabled
+        animate.Disabled = true
+        task.wait()
+        animate.Disabled = wasDisabled
+    end
+
+    return changed
 end
 
 local function restoreDropOriginalAnims(char)
@@ -2552,15 +2669,31 @@ local function restoreDropOriginalAnims(char)
     local animate = char:FindFirstChild("Animate")
     if not animate then return end
 
-    pcall(function()
-        if dropOriginalAnims.idle1 then animate.idle.Animation1.AnimationId = dropOriginalAnims.idle1 end
-        if dropOriginalAnims.idle2 then animate.idle.Animation2.AnimationId = dropOriginalAnims.idle2 end
-        if dropOriginalAnims.walk then animate.walk.WalkAnim.AnimationId = dropOriginalAnims.walk end
-        if dropOriginalAnims.run then animate.run.RunAnim.AnimationId = dropOriginalAnims.run end
-        if dropOriginalAnims.jump then animate.jump.JumpAnim.AnimationId = dropOriginalAnims.jump end
-        if dropOriginalAnims.fall then animate.fall.FallAnim.AnimationId = dropOriginalAnims.fall end
-        if dropOriginalAnims.climb then animate.climb.ClimbAnim.AnimationId = dropOriginalAnims.climb end
-    end)
+    local changed = false
+
+    local function setAnim(path, childName, animId)
+        local folder = animate:FindFirstChild(path)
+        if not folder then return end
+        local anim = folder:FindFirstChild(childName)
+        if not anim or not anim:IsA("Animation") or not animId then return end
+        anim.AnimationId = animId
+        changed = true
+    end
+
+    setAnim("idle", "Animation1", dropOriginalAnims.idle1)
+    setAnim("idle", "Animation2", dropOriginalAnims.idle2)
+    setAnim("walk", "WalkAnim", dropOriginalAnims.walk)
+    setAnim("run", "RunAnim", dropOriginalAnims.run)
+    setAnim("jump", "JumpAnim", dropOriginalAnims.jump)
+    setAnim("fall", "FallAnim", dropOriginalAnims.fall)
+    setAnim("climb", "ClimbAnim", dropOriginalAnims.climb)
+
+    if changed then
+        local wasDisabled = animate.Disabled
+        animate.Disabled = true
+        task.wait()
+        animate.Disabled = wasDisabled
+    end
 
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if humanoid then
@@ -2675,7 +2808,7 @@ local function doDrop()
     )
 
     if appliedGoodAnim then
-        task.delay(0.45, function()
+        task.delay(1.15, function()
             local currentChar = player.Character
             if currentChar then
                 restoreDropOriginalAnims(currentChar)
