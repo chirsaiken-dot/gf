@@ -174,20 +174,38 @@ if Config["Desync Speed Value"] == nil then
     SaveConfig()
 end
 
-if Config["Keybind Toggle Hub"] == nil then
-    Config["Keybind Toggle Hub"] = "ButtonY"
-end
-if Config["Keybind Lock Target"] == nil then
-    Config["Keybind Lock Target"] = "ButtonX"
-end
-if Config["Keybind Fling"] == nil then
-    Config["Keybind Fling"] = "ButtonR1"
-end
-if Config["Keybind TP Down"] == nil then
-    Config["Keybind TP Down"] = "ButtonB"
-end
-if Config["Keybind Manual TP"] == nil then
-    Config["Keybind Manual TP"] = "DPadUp"
+local KEYBIND_DEFAULTS = {
+    ["Keybind Toggle Hub"]    = "ButtonY",
+    ["Keybind Lock Target"]   = "ButtonX",
+    ["Keybind Fling"]         = "ButtonR1",
+    ["Keybind TP Down"]       = "ButtonB",
+    ["Keybind Manual TP"]     = "DPadUp",
+    ["Keybind Auto Play"]     = "",
+    ["Keybind Drop Brainrot"] = "",
+    ["Keybind Spin Body"]     = "",
+    ["Keybind Melee Aimbot"]  = "",
+    ["Keybind Instant Grab"]  = "",
+    ["Keybind Auto Bat"]      = "",
+    ["Keybind Auto Medusa"]   = "",
+    ["Keybind Speed"]         = "",
+    ["Keybind No Walk Anim"]  = "",
+    ["Keybind Anti Ragdoll"]  = "",
+    ["Keybind Infinite Jump"] = "",
+    ["Keybind Super Jump"]    = "",
+    ["Keybind No Collision"]  = "",
+    ["Keybind ESP Players"]   = "",
+    ["Keybind Xray Base"]     = "",
+    ["Keybind Optimizer"]     = "",
+    ["Keybind Anti FPS Dev"]  = "",
+    ["Keybind No Cam Coll"]   = "",
+    ["Keybind FOV"]           = "",
+    ["Keybind Taunt"]         = "",
+    ["Keybind Lagger"]        = "",
+}
+for k, v in pairs(KEYBIND_DEFAULTS) do
+    if Config[k] == nil then
+        Config[k] = v
+    end
 end
 SaveConfig()
 
@@ -4815,20 +4833,42 @@ end
 -- Controller keybinds
 do
     local parentFrame = frames["Keybinds"]
+    local listeningForBind = nil  -- set to a callback(keyName) while waiting
 
-    local function normalizeKeybindName(raw)
-        if typeof(raw) ~= "string" then return nil end
-        local trimmed = raw:gsub("^%s+", ""):gsub("%s+$", "")
-        if trimmed == "" then return nil end
-        if Enum.KeyCode[trimmed] then
-            return trimmed
-        end
-        return nil
-    end
+    local KEYBIND_ROWS = {
+        {"Toggle Hub",       "Keybind Toggle Hub"},
+        {"Lock Target",      "Keybind Lock Target"},
+        {"Fling",            "Keybind Fling"},
+        {"TP Down",          "Keybind TP Down"},
+        {"Manual TP",        "Keybind Manual TP"},
+        {"Auto Play",        "Keybind Auto Play"},
+        {"Drop Brainrot",    "Keybind Drop Brainrot"},
+        {"Spin Body",        "Keybind Spin Body"},
+        {"Melee Aimbot",     "Keybind Melee Aimbot"},
+        {"Instant Grab",     "Keybind Instant Grab"},
+        {"Auto Bat",         "Keybind Auto Bat"},
+        {"Auto Medusa",      "Keybind Auto Medusa"},
+        {"Speed Customizer", "Keybind Speed"},
+        {"No Walk Anim",     "Keybind No Walk Anim"},
+        {"Anti Ragdoll",     "Keybind Anti Ragdoll"},
+        {"Infinite Jump",    "Keybind Infinite Jump"},
+        {"Super Jump",       "Keybind Super Jump"},
+        {"No Collision",     "Keybind No Collision"},
+        {"ESP Players",      "Keybind ESP Players"},
+        {"Xray Base",        "Keybind Xray Base"},
+        {"Optimizer",        "Keybind Optimizer"},
+        {"Anti FPS Dev",     "Keybind Anti FPS Dev"},
+        {"No Cam Coll",      "Keybind No Cam Coll"},
+        {"FOV",              "Keybind FOV"},
+        {"Taunt",            "Keybind Taunt"},
+        {"Lagger",           "Keybind Lagger"},
+    }
 
-    local function createKeybindRow(labelText, configKey, fallback)
+    for _, def in ipairs(KEYBIND_ROWS) do
+        local labelText, configKey = def[1], def[2]
+
         local container = Instance.new("Frame")
-        container.Size = UDim2.new(1,0,0,45)
+        container.Size = UDim2.new(1,0,0,44)
         container.BackgroundColor3 = Color3.fromRGB(15,15,15)
         container.BackgroundTransparency = 0.2
         container.Parent = parentFrame
@@ -4836,51 +4876,64 @@ do
         Instance.new("UIStroke", container).Color = Color3.fromRGB(255,255,255)
 
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0.6,0,1,0)
-        label.Position = UDim2.new(0,12,0,0)
+        label.Size = UDim2.new(0.44,0,1,0)
+        label.Position = UDim2.new(0,10,0,0)
         label.BackgroundTransparency = 1
         label.Font = Enum.Font.GothamBold
-        label.TextSize = 14
+        label.TextSize = 13
         label.TextColor3 = Color3.fromRGB(255,255,255)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Text = labelText
         label.Parent = container
 
-        local textbox = Instance.new("TextBox")
-        textbox.Size = UDim2.new(0,90,0,30)
-        textbox.Position = UDim2.new(1,-100,0.5,-15)
-        textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
-        textbox.TextColor3 = Color3.new(1,1,1)
-        textbox.Font = Enum.Font.Gotham
-        textbox.TextSize = 13
-        textbox.Text = tostring(Config[configKey] or fallback)
-        textbox.ClearTextOnFocus = false
-        textbox.Parent = container
-        Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,6)
-        Instance.new("UIStroke", textbox).Color = Color3.fromRGB(255,255,255)
+        local keyLabel = Instance.new("TextLabel")
+        keyLabel.Size = UDim2.new(0.32,0,0,26)
+        keyLabel.Position = UDim2.new(0.45,0,0.5,-13)
+        keyLabel.BackgroundColor3 = Color3.fromRGB(30,30,30)
+        keyLabel.Font = Enum.Font.Gotham
+        keyLabel.TextSize = 10
+        keyLabel.TextColor3 = Color3.fromRGB(200,200,200)
+        keyLabel.TextScaled = false
+        keyLabel.ClipsDescendants = true
+        keyLabel.Text = (Config[configKey] ~= nil and Config[configKey] ~= "") and Config[configKey] or "None"
+        keyLabel.Parent = container
+        Instance.new("UICorner", keyLabel).CornerRadius = UDim.new(0,5)
 
-        textbox.FocusLost:Connect(function(enterPressed)
-            if not enterPressed then
-                textbox.Text = tostring(Config[configKey] or fallback)
-                return
-            end
+        local setBtn = Instance.new("TextButton")
+        setBtn.Size = UDim2.new(0,42,0,26)
+        setBtn.Position = UDim2.new(1,-50,0.5,-13)
+        setBtn.BackgroundColor3 = BUTTON_BLUE
+        setBtn.Font = Enum.Font.GothamBold
+        setBtn.TextSize = 12
+        setBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        setBtn.Text = "SET"
+        setBtn.Parent = container
+        Instance.new("UICorner", setBtn).CornerRadius = UDim.new(0,6)
 
-            local sanitized = normalizeKeybindName(textbox.Text)
-            if sanitized then
-                Config[configKey] = sanitized
-                textbox.Text = sanitized
+        setBtn.MouseButton1Click:Connect(function()
+            if listeningForBind then return end
+            setBtn.Text = "..."
+            setBtn.BackgroundColor3 = Color3.fromRGB(255,165,0)
+            keyLabel.Text = "Press..."
+            listeningForBind = function(name)
+                Config[configKey] = name
                 SaveConfig()
-            else
-                textbox.Text = tostring(Config[configKey] or fallback)
+                keyLabel.Text = name ~= "" and name or "None"
+                setBtn.Text = "SET"
+                setBtn.BackgroundColor3 = BUTTON_BLUE
+                listeningForBind = nil
             end
         end)
     end
 
-    createKeybindRow("Toggle Hub", "Keybind Toggle Hub", "ButtonY")
-    createKeybindRow("Lock Target", "Keybind Lock Target", "ButtonX")
-    createKeybindRow("Fling", "Keybind Fling", "ButtonR1")
-    createKeybindRow("TP Down", "Keybind TP Down", "ButtonB")
-    createKeybindRow("Manual TP", "Keybind Manual TP", "DPadUp")
+    -- Capture controller / keyboard input when waiting for a bind
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not listeningForBind then return end
+        if gpe then return end
+        local key = input.KeyCode
+        if key == Enum.KeyCode.Unknown then return end
+        listeningForBind(key.Name)
+    end)
 end
 
 ShowSection("Combat")
@@ -4899,82 +4952,161 @@ end
 
 toggleBtn.MouseButton1Click:Connect(toggleHubPanel)
 
-local function getBoundKeyCode(configKey)
-    local keyName = Config[configKey]
-    if typeof(keyName) ~= "string" or keyName == "" then
-        return nil
-    end
-    return Enum.KeyCode[keyName]
-end
-
-local function updateLockButtonVisual(state)
-    if not lockGui then return end
-    local btn = lockGui:FindFirstChildWhichIsA("TextButton", true)
-    if btn then
-        btn.Text = state and "LOCKED" or "LOCK"
-        btn.BackgroundColor3 = BUTTON_BLUE
-    end
-end
-
 local function setLockTargetState(state)
     lockEnabled = state
-    if state then
-        startLock()
-    else
-        stopLock()
-    end
-    updateLockButtonVisual(state)
-end
-
-local function updateFlingButtonVisual(state)
-    if not flingGui then return end
-    local btn = flingGui:FindFirstChildWhichIsA("TextButton", true)
-    if btn then
-        btn.Text = state and "FLING ON" or "FLING"
-        btn.BackgroundColor3 = BUTTON_BLUE
+    if state then startLock() else stopLock() end
+    if lockGui then
+        local btn = lockGui:FindFirstChildWhichIsA("TextButton", true)
+        if btn then btn.Text = state and "LOCKED" or "LOCK" ; btn.BackgroundColor3 = BUTTON_BLUE end
     end
 end
 
 local function setFlingState(state)
     flingActive = state
-    if state then
-        startFling()
-    else
-        stopFling()
+    if state then startFling() else stopFling() end
+    if flingGui then
+        local btn = flingGui:FindFirstChildWhichIsA("TextButton", true)
+        if btn then btn.Text = state and "FLING ON" or "FLING" ; btn.BackgroundColor3 = BUTTON_BLUE end
     end
-    updateFlingButtonVisual(state)
 end
+
+-- All keybind actions mapped by config key
+local KEYBIND_ACTIONS = {
+    ["Keybind Toggle Hub"]    = function() toggleHubPanel() end,
+    ["Keybind Lock Target"]   = function() setLockTargetState(not lockEnabled) end,
+    ["Keybind Fling"]         = function() setFlingState(not flingActive) end,
+    ["Keybind TP Down"]       = function() doTPDown() end,
+    ["Keybind Manual TP"]     = function() if ManualTPEnabled then doTP() end end,
+    ["Keybind Auto Play"]     = function()
+        Config["Auto Play"] = not Config["Auto Play"]
+        SaveConfig()
+        if Config["Auto Play"] then createAutoPlayGui() else destroyAutoPlayGui() end
+    end,
+    ["Keybind Drop Brainrot"] = function()
+        Config["Drop Brainrot"] = not Config["Drop Brainrot"]
+        SaveConfig()
+        if Config["Drop Brainrot"] then createDropButton() else removeDropButton() end
+    end,
+    ["Keybind Spin Body"]     = function()
+        Config["Spin Body"] = not Config["Spin Body"]
+        SaveConfig()
+        if Config["Spin Body"] then createSpinButton() else removeSpinButton() end
+    end,
+    ["Keybind Melee Aimbot"]  = function()
+        meleeEnabled = not meleeEnabled
+        Config["Melee Aimbot"] = meleeEnabled
+        SaveConfig()
+        if meleeEnabled then
+            if character then createMeleeAimbot(character) end
+        else
+            disableMeleeAimbot()
+        end
+    end,
+    ["Keybind Instant Grab"]  = function()
+        Config["Instant Grab"] = not Config["Instant Grab"]
+        SaveConfig()
+        ApplyToggle("Instant Grab", Config["Instant Grab"])
+    end,
+    ["Keybind Auto Bat"]      = function()
+        Config["Auto Bat"] = not Config["Auto Bat"]
+        SaveConfig()
+        ApplyToggle("Auto Bat", Config["Auto Bat"])
+    end,
+    ["Keybind Auto Medusa"]   = function()
+        AutoMedusaEnabled = not AutoMedusaEnabled
+        Config["Auto Medusa"] = AutoMedusaEnabled
+        SaveConfig()
+        InitMedusa()
+    end,
+    ["Keybind Speed"]         = function()
+        Config["Speed Customizer"] = not Config["Speed Customizer"]
+        SaveConfig()
+        local bg = lp.PlayerGui:FindFirstChild("BoosterCustomizer")
+        if bg then bg.Enabled = Config["Speed Customizer"] end
+    end,
+    ["Keybind No Walk Anim"]  = function()
+        Config["No Walk Animation"] = not Config["No Walk Animation"]
+        SaveConfig()
+        ApplyToggle("No Walk Animation", Config["No Walk Animation"])
+    end,
+    ["Keybind Anti Ragdoll"]  = function()
+        AntiRagdollEnabled = not AntiRagdollEnabled
+        Config["Anti Ragdoll"] = AntiRagdollEnabled
+        SaveConfig()
+        if AntiRagdollEnabled then startAntiRagdoll() else stopAntiRagdoll() end
+    end,
+    ["Keybind Infinite Jump"] = function()
+        infiniteJumpEnabled = not infiniteJumpEnabled
+        Config["Infinite Jump"] = infiniteJumpEnabled
+        SaveConfig()
+    end,
+    ["Keybind Super Jump"]    = function()
+        Config["Super Jump"] = not Config["Super Jump"]
+        SaveConfig()
+        ApplyToggle("Super Jump", Config["Super Jump"])
+    end,
+    ["Keybind No Collision"]  = function()
+        Config["No Player Collision"] = not Config["No Player Collision"]
+        SaveConfig()
+        ApplyToggle("No Player Collision", Config["No Player Collision"])
+    end,
+    ["Keybind ESP Players"]   = function()
+        Config["ESP Players"] = not Config["ESP Players"]
+        SaveConfig()
+        toggleESPPlayers(Config["ESP Players"])
+    end,
+    ["Keybind Xray Base"]     = function()
+        Config["Xray Base"] = not Config["Xray Base"]
+        SaveConfig()
+        toggleESPBases(Config["Xray Base"])
+    end,
+    ["Keybind Optimizer"]     = function()
+        Config["Optimizer"] = not Config["Optimizer"]
+        SaveConfig()
+        if Config["Optimizer"] then enableOptimizer() else disableOptimizer() end
+    end,
+    ["Keybind Anti FPS Dev"]  = function()
+        Config["Anti FPS Devourer"] = not Config["Anti FPS Devourer"]
+        SaveConfig()
+        if Config["Anti FPS Devourer"] then enableAntiFPSDevourer() else disableAntiFPSDevourer() end
+    end,
+    ["Keybind No Cam Coll"]   = function()
+        Config["No Camera Collision"] = not Config["No Camera Collision"]
+        SaveConfig()
+        ApplyToggle("No Camera Collision", Config["No Camera Collision"])
+    end,
+    ["Keybind FOV"]           = function()
+        Config["FOV"] = not Config["FOV"]
+        SaveConfig()
+        ApplyToggle("FOV", Config["FOV"])
+    end,
+    ["Keybind Taunt"]         = function()
+        local tg = game:GetService("CoreGui"):FindFirstChild("TauntButtonGui")
+        if tg then
+            local btn = tg:FindFirstChildWhichIsA("TextButton", true)
+            if btn then btn:Activate() end
+        end
+    end,
+    ["Keybind Lagger"]        = function()
+        local lg = game:GetService("CoreGui"):FindFirstChild("LaggerButtonGui")
+        if lg then
+            local btn = lg:FindFirstChildWhichIsA("TextButton", true)
+            if btn then btn:Activate() end
+        end
+    end,
+}
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then return end
     if UserInputService:GetFocusedTextBox() then return end
-
     local key = input.KeyCode
     if key == Enum.KeyCode.Unknown then return end
-
-    if key == getBoundKeyCode("Keybind Toggle Hub") then
-        toggleHubPanel()
-        return
-    end
-
-    if key == getBoundKeyCode("Keybind Lock Target") then
-        setLockTargetState(not lockEnabled)
-        return
-    end
-
-    if key == getBoundKeyCode("Keybind Fling") then
-        setFlingState(not flingActive)
-        return
-    end
-
-    if key == getBoundKeyCode("Keybind TP Down") then
-        doTPDown()
-        return
-    end
-
-    if key == getBoundKeyCode("Keybind Manual TP") then
-        if ManualTPEnabled then
-            doTP()
+    local keyName = key.Name
+    for configKey, action in pairs(KEYBIND_ACTIONS) do
+        local bound = Config[configKey]
+        if typeof(bound) == "string" and bound ~= "" and bound == keyName then
+            action()
+            return
         end
     end
 end)
