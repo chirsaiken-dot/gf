@@ -878,253 +878,116 @@ local MELEE_RANGE = 45
 local MELEE_ONLY_ENEMIES = true
 
 local meleeEnabled = false
-local lockEnabled = false
+local meleeConnection
+local meleeAlignOrientation
+local meleeAttachment
 
-local BAT_MOVE_SPEED = 56.5
-local BAT_LOOP_TIME = 0.3
-local BAT_DEFAULT_LOOK_DISTANCE = 50
-
-local batAimbotEnabled = false
-local lastEquipTick = 0
-local lastUseTick = 0
-local lookConnection = nil
-local moveConnection = nil
-local lookAttachment = nil
-local lookAlignOrientation = nil
-
-local function getNearestTarget()
-    if not hrp then
-        return nil, math.huge
+local function isValidMeleeTarget(humanoid, rootPart)
+    if not (humanoid and rootPart) then return false end
+    if humanoid.Health <= 0 then return false end
+    
+    if MELEE_ONLY_ENEMIES then
+        local targetPlayer = Players:GetPlayerFromCharacter(humanoid.Parent)
+        if not targetPlayer or targetPlayer == player then
+            return false
+        end
     end
+    
+    return true
+end
 
-    local closestTarget = nil
-    local shortestDistance = math.huge
-
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character then
-            local targetRootPart = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
-            local targetHumanoid = otherPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if targetRootPart and targetHumanoid and targetHumanoid.Health > 0 then
-                local distance = (targetRootPart.Position - hrp.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closestTarget = targetRootPart
-                end
+local function getClosestMeleeTarget(hrp)
+    local closest
+    local minDist = MELEE_RANGE
+    
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == player then continue end
+        local char = p.Character
+        if not char then continue end
+        
+        local targetHrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        
+        if isValidMeleeTarget(hum, targetHrp) then
+            local dist = (targetHrp.Position - hrp.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                closest = targetHrp
             end
         end
     end
-
-    return closestTarget, shortestDistance
-end
-
-local function getClosestLookTarget()
-    if not hrp then
-        return nil
-    end
-
-    local nearestTarget = nil
-    local nearestDistance = lockEnabled and LOCK_RADIUS or BAT_DEFAULT_LOOK_DISTANCE
-
-    if meleeEnabled and MELEE_RANGE > nearestDistance then
-        nearestDistance = MELEE_RANGE
-    end
-
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character then
-            local targetRootPart = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
-            local targetHumanoid = otherPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if targetRootPart and targetHumanoid and targetHumanoid.Health > 0 then
-                local distance = (hrp.Position - targetRootPart.Position).Magnitude
-                if distance < nearestDistance then
-                    nearestDistance = distance
-                    nearestTarget = targetRootPart
-                end
-            end
-        end
-    end
-
-    return nearestTarget
-end
-
-local function equipBat()
-    if not hum or not character then
-        return nil
-    end
-
-    local backpack = player:FindFirstChildOfClass("Backpack")
-    local batTool = (backpack and backpack:FindFirstChild("Bat")) or character:FindFirstChild("Bat")
-    if batTool then
-        hum:EquipTool(batTool)
-    end
-    return batTool
-end
-
-local function stopLookAt()
-    if lookConnection then
-        lookConnection:Disconnect()
-        lookConnection = nil
-    end
-
-    if lookAlignOrientation then
-        lookAlignOrientation:Destroy()
-        lookAlignOrientation = nil
-    end
-
-    if lookAttachment then
-        lookAttachment:Destroy()
-        lookAttachment = nil
-    end
-
-    if hum then
-        hum.AutoRotate = true
-    end
-end
-
-local function startLookAt()
-    if not hrp or not hum then
-        return
-    end
-
-    stopLookAt()
-    hum.AutoRotate = false
-
-    lookAttachment = Instance.new("Attachment")
-    lookAttachment.Parent = hrp
-
-    lookAlignOrientation = Instance.new("AlignOrientation")
-    lookAlignOrientation.Attachment0 = lookAttachment
-    lookAlignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    lookAlignOrientation.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    lookAlignOrientation.Responsiveness = 1000
-    lookAlignOrientation.RigidityEnabled = true
-    lookAlignOrientation.Parent = hrp
-
-    local lastTargetPosition = nil
-    lookConnection = RunService.RenderStepped:Connect(function()
-        if not batAimbotEnabled or not hrp or not lookAlignOrientation then
-            return
-        end
-
-        local target = getClosestLookTarget()
-        if not target then
-            return
-        end
-
-        local predictedY = target.Position.Y
-        if lastTargetPosition then
-            local deltaY = target.Position.Y - lastTargetPosition.Y
-            if math.abs(deltaY) > 2 then
-                predictedY = target.Position.Y + deltaY * 0.7
-            end
-        end
-
-        lastTargetPosition = target.Position
-        local lookPosition = Vector3.new(target.Position.X, predictedY, target.Position.Z)
-        lookAlignOrientation.CFrame = CFrame.lookAt(hrp.Position, lookPosition)
-    end)
-end
-
-local function stopBatAimbot()
-    batAimbotEnabled = false
-
-    if moveConnection then
-        moveConnection:Disconnect()
-        moveConnection = nil
-    end
-
-    stopLookAt()
-
-    if hrp then
-        hrp.AssemblyLinearVelocity = Vector3.zero
-    end
-end
-
-local function startBatAimbot()
-    if not character or not hrp or not hum then
-        return
-    end
-
-    stopBatAimbot()
-    batAimbotEnabled = true
-    startLookAt()
-
-    moveConnection = RunService.Heartbeat:Connect(function()
-        if not batAimbotEnabled or not character or not hrp or not hum then
-            return
-        end
-
-        hrp.CanCollide = false
-
-        local targetRootPart, distance = getNearestTarget()
-        if not targetRootPart then
-            return
-        end
-
-        local predictedPosition = targetRootPart.Position
-        local targetHumanoid = targetRootPart.Parent and targetRootPart.Parent:FindFirstChildOfClass("Humanoid")
-        if targetHumanoid and targetHumanoid.FloorMaterial == Enum.Material.Air then
-            predictedPosition = predictedPosition + Vector3.new(0, targetHumanoid.Jump and 4 or 2, 0)
-        end
-
-        local moveDirection = predictedPosition - hrp.Position
-        if moveDirection.Magnitude > 0 then
-            hrp.AssemblyLinearVelocity = moveDirection.Unit * BAT_MOVE_SPEED
-        end
-
-        if meleeEnabled and distance <= MELEE_RANGE then
-            if tick() - lastEquipTick >= BAT_LOOP_TIME then
-                equipBat()
-                lastEquipTick = tick()
-            end
-
-            if tick() - lastUseTick >= BAT_LOOP_TIME then
-                local equippedBat = character:FindFirstChild("Bat")
-                if equippedBat then
-                    equippedBat:Activate()
-                end
-                lastUseTick = tick()
-            end
-        end
-    end)
-end
-
-local function updateCombatAimState()
-    if meleeEnabled or lockEnabled then
-        startBatAimbot()
-    else
-        stopBatAimbot()
-    end
+    
+    return closest
 end
 
 local function createMeleeAimbot(char)
-    if char then
-        setupCharacter(char)
+    local hrp = char:WaitForChild("HumanoidRootPart", 8)
+    local humanoid = char:WaitForChild("Humanoid", 8)
+    
+    if not (hrp and humanoid) then return end
+    
+    -- Cleanup viejo
+    if meleeAlignOrientation then
+        pcall(function() meleeAlignOrientation:Destroy() end)
     end
-    meleeEnabled = true
-    updateCombatAimState()
+    if meleeAttachment then
+        pcall(function() meleeAttachment:Destroy() end)
+    end
+    
+    meleeAttachment = Instance.new("Attachment")
+    meleeAttachment.Parent = hrp
+    
+    meleeAlignOrientation = Instance.new("AlignOrientation")
+    meleeAlignOrientation.Attachment0 = meleeAttachment
+    meleeAlignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    meleeAlignOrientation.RigidityEnabled = true
+    meleeAlignOrientation.MaxTorque = 100000
+    meleeAlignOrientation.Responsiveness = 200
+    meleeAlignOrientation.Parent = hrp
+    
+    if meleeConnection then
+        meleeConnection:Disconnect()
+    end
+    
+    meleeConnection = RunService.RenderStepped:Connect(function()
+        if not char.Parent or not meleeEnabled then return end
+        
+        local target = getClosestMeleeTarget(hrp)
+        
+        if target then
+            humanoid.AutoRotate = false
+            meleeAlignOrientation.Enabled = true
+            local targetPos = Vector3.new(target.Position.X, hrp.Position.Y, target.Position.Z)
+            meleeAlignOrientation.CFrame = CFrame.lookAt(hrp.Position, targetPos)
+        else
+            meleeAlignOrientation.Enabled = false
+            humanoid.AutoRotate = true
+        end
+    end)
 end
 
 local function disableMeleeAimbot()
     meleeEnabled = false
-    updateCombatAimState()
-end
-
-local function startLock()
-    lockEnabled = true
-    updateCombatAimState()
-end
-
-local function stopLock()
-    lockEnabled = false
-    updateCombatAimState()
-end
-
-function createLockGui()
-    startLock()
-end
-
-function destroyLockGui()
-    stopLock()
+    
+    if meleeConnection then
+        meleeConnection:Disconnect()
+        meleeConnection = nil
+    end
+    
+    if meleeAlignOrientation then
+        meleeAlignOrientation.Enabled = false
+        pcall(function() meleeAlignOrientation:Destroy() end)
+        meleeAlignOrientation = nil
+    end
+    
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.AutoRotate = true
+    end
+    
+    if meleeAttachment then
+        pcall(function() meleeAttachment:Destroy() end)
+        meleeAttachment = nil
+    end
 end
 
 local function createAutoPlayGui()
@@ -1996,11 +1859,11 @@ local function setupCharacter(char)
 
     hum = character:WaitForChild("Humanoid")
 
-    -- recrear melee/lock aimbot si está activo al reiniciar personaje 
-    if meleeEnabled or lockEnabled then
+    -- recrear melee aimbot si está activo al reiniciar personaje 
+    if meleeEnabled then
         task.spawn(function()
             task.wait(0.3)
-            updateCombatAimState()
+            createMeleeAimbot(char)
         end)
     end
 
@@ -2524,6 +2387,68 @@ local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local lp = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+
+local autoBatActive = false
+local autoBatLoop = nil
+
+local function isTouchSwingBlocked()
+    if not UserInputService or not UserInputService.TouchEnabled then
+        return false
+    end
+
+    local ok, touches = pcall(function()
+        return UserInputService:GetTouches()
+    end)
+
+    return ok and touches and #touches > 0
+end
+
+local function getEquippedBatTool(char)
+    if not char then return nil end
+
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") and string.find(string.lower(tool.Name), "bat", 1, true) then
+            return tool
+        end
+    end
+
+    return nil
+end
+
+local function startAutoBat()
+    if autoBatLoop then return end
+
+    autoBatActive = true
+
+    autoBatLoop = task.spawn(function()
+        while autoBatActive do
+            local char = lp.Character
+
+            if char and not isTouchSwingBlocked() then
+                local tool = getEquippedBatTool(char)
+
+                if tool then
+                    pcall(function()
+                        tool:Activate()
+                    end)
+                end
+            end
+
+            task.wait(0.26 + math.random() * 0.20)
+        end
+
+        autoBatLoop = nil
+    end)
+end
+
+local function stopAutoBat()
+    autoBatActive = false
+
+    if autoBatLoop then
+        pcall(task.cancel, autoBatLoop)
+        autoBatLoop = nil
+    end
+end
 
 local function ApplyToggle(text, enabled)
 
@@ -3368,6 +3293,235 @@ end
 local FOV_VALUE = Config["FOV Value"] or 90
 
 LOCK_RADIUS = 70
+local LOCK_SPEED = 50
+local PREDICTION = 0.18
+
+local lockGui
+local lockHbConn
+local lockLv, lockAtt, lockGyro
+local lockEnabled = false
+local currentTarget = nil
+
+local function getNearest()
+	local char = lp.Character
+	if not char then return nil end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return nil end
+
+	local nearest = nil
+	local nearestDist = LOCK_RADIUS
+
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= lp then
+			local pc = plr.Character
+			local phrp = pc and pc:FindFirstChild("HumanoidRootPart")
+			if phrp then
+				local d = (phrp.Position - hrp.Position).Magnitude
+				if d <= nearestDist then
+					nearest = plr
+					nearestDist = d
+				end
+			end
+		end
+	end
+
+	return nearest
+end
+
+local function getBat()
+	for _,t in ipairs(lp.Backpack:GetChildren()) do
+		if t:IsA("Tool") and string.find(string.lower(t.Name),"bat",1,true) then
+			return t
+		end
+	end
+
+	local char = lp.Character
+	if char then
+		for _,t in ipairs(char:GetChildren()) do
+			if t:IsA("Tool") and string.find(string.lower(t.Name),"bat",1,true) then
+				return t
+			end
+		end
+	end
+
+	return nil
+end
+
+local function startLock()
+
+	local char = lp.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	lockAtt = Instance.new("Attachment", hrp)
+
+	lockLv = Instance.new("LinearVelocity", hrp)
+	lockLv.Attachment0 = lockAtt
+	lockLv.MaxForce = 50000
+	lockLv.RelativeTo = Enum.ActuatorRelativeTo.World
+	lockLv.Enabled = false
+
+    lockGyro = Instance.new("BodyGyro", hrp)
+    lockGyro.MaxTorque = Vector3.new(1e7,1e7,1e7)
+    lockGyro.P = 40000
+    lockGyro.D = 1000
+
+	lockHbConn = RunService.Heartbeat:Connect(function()
+
+		if not currentTarget then
+			currentTarget = getNearest()
+		end
+
+		local targetPlayer = currentTarget
+		if not targetPlayer then
+			lockLv.Enabled = false
+			return
+		end
+
+		local tChar = targetPlayer.Character
+        local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
+		local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+        local tHead = tChar and tChar:FindFirstChild("Head")
+
+        if not tHrp or not tHead or (tHum and tHum.Health <= 0) then
+			currentTarget = nil
+			lockLv.Enabled = false
+			return
+		end
+
+		lockLv.Enabled = true
+
+        -- seguir la cabeza: arriba y abajo 6 studs (amplitud 3)
+        local hoverY = 3 + math.sin(tick() * 3.2) * 3
+        local targetPos = tHead.Position + Vector3.new(0, hoverY, 0)
+
+		local dir = targetPos - hrp.Position
+		local distance = dir.Magnitude
+
+        local stopDistance = 0.75
+
+		if distance > stopDistance then
+			lockLv.VectorVelocity = dir.Unit * LOCK_SPEED
+		else
+            lockLv.VectorVelocity = tHrp.AssemblyLinearVelocity
+		end
+
+        -- mirar siempre hacia abajo
+        if lockGyro then
+            lockGyro.CFrame = CFrame.lookAt(hrp.Position, hrp.Position - Vector3.new(0,1,0))
+        end
+
+	end)
+
+end
+
+
+local function stopLock()
+
+	currentTarget = nil
+
+	if lockHbConn then
+		lockHbConn:Disconnect()
+		lockHbConn = nil
+	end
+
+	if lockLv then
+		lockLv:Destroy()
+		lockLv = nil
+	end
+
+	if lockAtt then
+		lockAtt:Destroy()
+		lockAtt = nil
+	end
+
+    if lockGyro then
+        lockGyro:Destroy()
+        lockGyro = nil
+    end
+
+end
+
+function createLockGui()
+	if lockGui then return end
+
+	lockGui = Instance.new("ScreenGui")
+	lockGui.Name = "Orrxl4BatTarget"
+	lockGui.ResetOnSpawn = false
+	lockGui.Parent = game:GetService("CoreGui")
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,120,0,40)
+	btn.Position = UDim2.new(
+    Config["Lock Button X"],
+    Config["Lock Button OffsetX"],
+    Config["Lock Button Y"],
+    Config["Lock Button OffsetY"]
+)
+	btn.Text = "LOCK"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.TextColor3 = Color3.new(1,1,1)
+    btn.BackgroundColor3 = BUTTON_BLUE
+	btn.Parent = lockGui
+
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+	btn.Active = true
+	btn.Draggable = not UILocked
+btn.InputEnded:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+
+		local pos = btn.Position
+
+		Config["Lock Button X"] = pos.X.Scale
+		Config["Lock Button OffsetX"] = pos.X.Offset
+		Config["Lock Button Y"] = pos.Y.Scale
+		Config["Lock Button OffsetY"] = pos.Y.Offset
+
+		SaveConfig()
+
+	end
+
+end)
+
+btn.MouseButton1Click:Connect(function()
+
+	local players = Players:GetPlayers()
+
+	-- si estás solo
+	if #players <= 1 then
+		warn("No hay jugadores en el servidor")
+		return
+	end
+
+	lockEnabled = not lockEnabled
+
+	if lockEnabled then
+		btn.Text = "LOCKED"
+        btn.BackgroundColor3 = BUTTON_BLUE
+		startLock()
+	else
+		btn.Text = "LOCK"
+        btn.BackgroundColor3 = BUTTON_BLUE
+		stopLock()
+	end
+
+end)
+end
+
+function destroyLockGui()
+	lockEnabled = false
+	stopLock()
+	if lockGui then
+		lockGui:Destroy()
+		lockGui = nil
+	end
+end
 
 -- AUTO MEDUSA LOGICA
 local Players = game:GetService("Players")
@@ -3867,33 +4021,10 @@ elseif text == "No Walk Animation" then
     end
 
 elseif text == "Auto Bat" then
-    autoBatActive = enabled
-
     if enabled then
-        if autoBatLoop then
-            autoBatActive = false
-            autoBatLoop = nil
-        end
-
-        autoBatActive = true
-
-        autoBatLoop = task.spawn(function()
-            while autoBatActive do
-                local char = lp.Character
-                if char then
-                    local tool = char:FindFirstChild("Bat")
-                    if tool and tool:IsA("Tool") then
-                        pcall(function()
-                            tool:Activate()
-                        end)
-                    end
-                end
-                task.wait(0.4) -- velocidad del golpe
-            end
-        end)
-
+        startAutoBat()
     else
-        autoBatActive = false
+        stopAutoBat()
     end
 
 elseif text == "Lock Target" then
@@ -3908,8 +4039,12 @@ elseif text == "Auto Medusa" then
     InitMedusa()
 
 elseif text == "Melee Aimbot" then
+    meleeEnabled = enabled
+    
     if enabled then
-        createMeleeAimbot(character or lp.Character)
+        if character then
+            createMeleeAimbot(character)
+        end
     else
         disableMeleeAimbot()
     end
@@ -4836,29 +4971,17 @@ elseif text == "No Walk Animation" then
     end
 
             elseif text == "Auto Bat" then
-                autoBatActive = true
-
-                task.spawn(function()
-                    while autoBatActive do
-                        local char = lp.Character
-                        if char then
-                            local tool = char:FindFirstChild("Bat")
-                            if tool then
-                                pcall(function()
-                                    tool:Activate()
-                                end)
-                            end
-                        end
-                        task.wait(0.4)
-                    end
-                end)
+                startAutoBat()
 
             elseif text == "Auto Medusa" then
                 AutoMedusaEnabled = true
                 InitMedusa()
 
             elseif text == "Melee Aimbot" then
-                createMeleeAimbot(lp.Character)
+                meleeEnabled = true
+                if lp.Character then
+                    createMeleeAimbot(lp.Character)
+                end
 
             elseif text == "Lock Target" then
                 createLockGui()
