@@ -106,6 +106,10 @@ local Config = {
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
     ["Jump Value"] = 60,
+    ["Desync Speed Value"] = 53,
+    ["Desync Steal Speed Value"] = 29,
+    ["Desync Jump Value"] = 60,
+    ["Speed Mode"] = "Normal",
 
     ["AutoPlay Speed"] = 51,
     ["AutoPlay StealSpeed"] = 29,
@@ -1884,7 +1888,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,215)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1996,6 +2000,66 @@ local activateStroke = Instance.new("UIStroke", activate)
 
 activateStroke.Color = Color3.fromRGB(255,255,255)
 
+if Config["Desync Speed Value"] == nil then
+    Config["Desync Speed Value"] = Config["Speed Value"]
+end
+
+if Config["Desync Steal Speed Value"] == nil then
+    Config["Desync Steal Speed Value"] = Config["Steal Speed Value"]
+end
+
+if Config["Desync Jump Value"] == nil then
+    Config["Desync Jump Value"] = Config["Jump Value"]
+end
+
+if Config["Speed Mode"] ~= "Normal" and Config["Speed Mode"] ~= "Desync Speed" then
+    Config["Speed Mode"] = "Normal"
+end
+
+local speedMode = Config["Speed Mode"]
+
+local tabs = Instance.new("Frame")
+tabs.Size = UDim2.new(1,-20,0,26)
+tabs.Position = UDim2.new(0,10,0,69)
+tabs.BackgroundTransparency = 1
+tabs.Parent = main
+
+local normalTab = Instance.new("TextButton")
+normalTab.Size = UDim2.new(0.49,0,1,0)
+normalTab.Position = UDim2.new(0,0,0,0)
+normalTab.BackgroundColor3 = BUTTON_BLUE
+normalTab.Text = "Normal"
+normalTab.TextColor3 = Color3.fromRGB(255,255,255)
+normalTab.Font = Enum.Font.GothamBold
+normalTab.TextSize = 12
+normalTab.Parent = tabs
+Instance.new("UICorner", normalTab).CornerRadius = UDim.new(0,6)
+
+local desyncTab = Instance.new("TextButton")
+desyncTab.Size = UDim2.new(0.49,0,1,0)
+desyncTab.Position = UDim2.new(0.51,0,0,0)
+desyncTab.BackgroundColor3 = BUTTON_BLUE
+desyncTab.Text = "Desync Speed"
+desyncTab.TextColor3 = Color3.fromRGB(255,255,255)
+desyncTab.Font = Enum.Font.GothamBold
+desyncTab.TextSize = 12
+desyncTab.Parent = tabs
+Instance.new("UICorner", desyncTab).CornerRadius = UDim.new(0,6)
+
+local normalTabStroke = Instance.new("UIStroke", normalTab)
+normalTabStroke.Color = Color3.fromRGB(255,255,255)
+
+local desyncTabStroke = Instance.new("UIStroke", desyncTab)
+desyncTabStroke.Color = Color3.fromRGB(255,255,255)
+
+local function getModeKeys()
+    if speedMode == "Desync Speed" then
+        return "Desync Speed Value", "Desync Steal Speed Value", "Desync Jump Value"
+    end
+
+    return "Speed Value", "Steal Speed Value", "Jump Value"
+end
+
 --// CREAR ROW FUNCIÓN 
 
 local function createRow(text,posY,default)
@@ -2052,13 +2116,48 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
+local speedBox, speedLabel = createRow("Speed",105,53)
+local stealBox, stealLabel = createRow("Steal Speed",140,29)
+local jumpBox, jumpLabel = createRow("Jump",175,60)
 
-speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
-jumpBox.Text = tostring(Config["Jump Value"])
+local function updateTabVisuals()
+    local isDesync = speedMode == "Desync Speed"
+
+    if isDesync then
+        normalTab.BackgroundTransparency = 0.35
+        desyncTab.BackgroundTransparency = 0
+    else
+        normalTab.BackgroundTransparency = 0
+        desyncTab.BackgroundTransparency = 0.35
+    end
+end
+
+local function loadSpeedProfileToBoxes()
+    local speedKey, stealKey, jumpKey = getModeKeys()
+
+    speedBox.Text = tostring(Config[speedKey] or 53)
+    stealBox.Text = tostring(Config[stealKey] or 29)
+    jumpBox.Text = tostring(Config[jumpKey] or 60)
+end
+
+normalTab.MouseButton1Click:Connect(function()
+    speedMode = "Normal"
+    Config["Speed Mode"] = speedMode
+    SaveConfig()
+    updateTabVisuals()
+    loadSpeedProfileToBoxes()
+end)
+
+desyncTab.MouseButton1Click:Connect(function()
+    speedMode = "Desync Speed"
+    Config["Speed Mode"] = speedMode
+    SaveConfig()
+    updateTabVisuals()
+    loadSpeedProfileToBoxes()
+end)
+
+updateTabVisuals()
+loadSpeedProfileToBoxes()
 
 --// VALUES
 
@@ -2074,7 +2173,7 @@ local jumpValue = 50
 
 --// SANITIZE
 
-local function applyInput(box,min,max,default,key)
+local function applyInput(box,min,max,default,normalKey,desyncKey)
 
 box.FocusLost:Connect(function()
 
@@ -2084,16 +2183,17 @@ num = math.clamp(num,min,max)
 
 box.Text = tostring(num)
 
-Config[key] = num
+local activeKey = (speedMode == "Desync Speed") and desyncKey or normalKey
+Config[activeKey] = num
 SaveConfig()
 
 end)
 
 end
 
-applyInput(speedBox,15,200,53,"Speed Value")
-applyInput(stealBox,15,200,29,"Steal Speed Value")
-applyInput(jumpBox,50,200,60,"Jump Value")
+applyInput(speedBox,15,200,53,"Speed Value","Desync Speed Value")
+applyInput(stealBox,15,200,29,"Steal Speed Value","Desync Steal Speed Value")
+applyInput(jumpBox,50,200,60,"Jump Value","Desync Jump Value")
 
 --// BOTÓN LÓGICA 
 
@@ -2242,6 +2342,7 @@ end)
 -- ======================
 
 local elementsToHide = {
+tabs,
 speedBox,
 stealBox,
 jumpBox,
@@ -2291,7 +2392,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,215)}
 )
 
 tween:Play()
@@ -2492,89 +2593,6 @@ local debounce = false
 local wfConns = {}
 local wfActive = false
 
-local dropGoodAnims = {
-    idle = {
-        "rbxassetid://616136790",
-        "rbxassetid://616138447"
-    },
-    walk = "rbxassetid://616146177",
-    run = "rbxassetid://616163682",
-    jump = "rbxassetid://616161997",
-    fall = "rbxassetid://616157476",
-    climb = "rbxassetid://616156119"
-}
-
-local dropOriginalAnims = nil
-
-local function saveDropOriginalAnims(animate)
-    if dropOriginalAnims then return end
-
-    local idle = animate:FindFirstChild("idle")
-    local walk = animate:FindFirstChild("walk")
-    local run = animate:FindFirstChild("run")
-    local jump = animate:FindFirstChild("jump")
-    local fall = animate:FindFirstChild("fall")
-    local climb = animate:FindFirstChild("climb")
-
-    dropOriginalAnims = {
-        idle1 = idle and idle:FindFirstChild("Animation1") and idle.Animation1.AnimationId,
-        idle2 = idle and idle:FindFirstChild("Animation2") and idle.Animation2.AnimationId,
-        walk = walk and walk:FindFirstChild("WalkAnim") and walk.WalkAnim.AnimationId,
-        run = run and run:FindFirstChild("RunAnim") and run.RunAnim.AnimationId,
-        jump = jump and jump:FindFirstChild("JumpAnim") and jump.JumpAnim.AnimationId,
-        fall = fall and fall:FindFirstChild("FallAnim") and fall.FallAnim.AnimationId,
-        climb = climb and climb:FindFirstChild("ClimbAnim") and climb.ClimbAnim.AnimationId
-    }
-end
-
-local function applyDropGoodAnims(char)
-    local animate = char:FindFirstChild("Animate")
-    if not animate then return false end
-
-    saveDropOriginalAnims(animate)
-
-    pcall(function()
-        animate.idle.Animation1.AnimationId = dropGoodAnims.idle[1]
-        animate.idle.Animation2.AnimationId = dropGoodAnims.idle[2]
-        animate.walk.WalkAnim.AnimationId = dropGoodAnims.walk
-        animate.run.RunAnim.AnimationId = dropGoodAnims.run
-        animate.jump.JumpAnim.AnimationId = dropGoodAnims.jump
-        animate.fall.FallAnim.AnimationId = dropGoodAnims.fall
-        animate.climb.ClimbAnim.AnimationId = dropGoodAnims.climb
-    end)
-
-    return true
-end
-
-local function restoreDropOriginalAnims(char)
-    if not dropOriginalAnims then return end
-
-    local animate = char:FindFirstChild("Animate")
-    if not animate then return end
-
-    pcall(function()
-        if dropOriginalAnims.idle1 then animate.idle.Animation1.AnimationId = dropOriginalAnims.idle1 end
-        if dropOriginalAnims.idle2 then animate.idle.Animation2.AnimationId = dropOriginalAnims.idle2 end
-        if dropOriginalAnims.walk then animate.walk.WalkAnim.AnimationId = dropOriginalAnims.walk end
-        if dropOriginalAnims.run then animate.run.RunAnim.AnimationId = dropOriginalAnims.run end
-        if dropOriginalAnims.jump then animate.jump.JumpAnim.AnimationId = dropOriginalAnims.jump end
-        if dropOriginalAnims.fall then animate.fall.FallAnim.AnimationId = dropOriginalAnims.fall end
-        if dropOriginalAnims.climb then animate.climb.ClimbAnim.AnimationId = dropOriginalAnims.climb end
-    end)
-
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        local animator = humanoid:FindFirstChildOfClass("Animator")
-        if animator then
-            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                pcall(function()
-                    track:Stop(0.05)
-                end)
-            end
-        end
-    end
-end
-
 local function startWalkFling()
 
     wfActive = true
@@ -2664,23 +2682,28 @@ local function doDrop()
 
     if not humanoid or not root then return end
 
-    local appliedGoodAnim = applyDropGoodAnims(char)
+    -- guardar altura original
+    local originalY = root.Position.Y
 
+    -- registrar salto
     humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 
+    -- fuerza real del salto
     root.AssemblyLinearVelocity = Vector3.new(
         root.AssemblyLinearVelocity.X,
         100,
         root.AssemblyLinearVelocity.Z
     )
 
-    if appliedGoodAnim then
-        task.delay(0.45, function()
-            local currentChar = player.Character
-            if currentChar then
-                restoreDropOriginalAnims(currentChar)
-            end
-        end)
+    -- bloquear solo la altura (no movimiento)
+    local start = tick()
+    while tick() - start < 0.2 do
+
+        local pos = root.Position
+        root.CFrame = CFrame.new(pos.X, originalY, pos.Z) * CFrame.Angles(0, root.Orientation.Y * math.pi/180, 0)
+
+        task.wait()
+
     end
 
 end
