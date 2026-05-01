@@ -2440,10 +2440,16 @@ local function ApplyToggle(text, enabled)
 
 
     elseif text == "Instant Grab" then
+        autoStealEnabled = enabled
+
         if enabled then
-            startInstantGrabCore()
+            StartInstantGrab()
+
         else
-            stopInstantGrabCore()
+
+            autoStealEnabled = false
+            StopInstantGrab()
+
         end
     end
 
@@ -3059,112 +3065,118 @@ local normalGrabRadius = grabRadius
 local radioTextbox
 
 --// AUTO STEAL / INSTANT GRAB (LOGICA VANDER + STEALHITBOX)
+local STEAL_DURATION = 0.12
+local instantStealAnimals = {}
+local instantStealPrompts = {}
+local instantStealCallbacks = {}
+local instantStealBusy = false
+local instantStealConn = nil
 
-local function isInsideStealHitbox(root)
-	if not root or not root.Parent then return false end
+local function isMyBase(plotName)
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return false end
 
-	local plots = workspace:FindFirstChild("Plots")
-	if not plots then return false end
+    local plot = plots:FindFirstChild(plotName)
+    if not plot then return false end
 
-	for _, plot in ipairs(plots:GetChildren()) do
-		local hitbox = plot:FindFirstChild("StealHitbox", true)
+    local sign = plot:FindFirstChild("PlotSign")
+    if not sign then return false end
 
-		if hitbox and hitbox:IsA("BasePart") then
-			local parts = workspace:GetPartsInPart(hitbox)
-
-			for _, p in ipairs(parts) do
-				if p:IsDescendantOf(root.Parent) then
-					return true
-				end
-			end
-		end
-	end
-
-	return false
+    local yourBase = sign:FindFirstChild("YourBase")
+    return yourBase and yourBase:IsA("BillboardGui") and yourBase.Enabled
 end
 
+local function scanInstantStealPlot(plot)
+    if not plot or not plot:IsA("Model") then return end
+    if isMyBase(plot.Name) then return end
+
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return end
+
+    for _, pod in ipairs(podiums:GetChildren()) do
+        if pod:IsA("Model") and pod:FindFirstChild("Base") then
+            table.insert(instantStealAnimals, {
+                plot = plot.Name,
+                slot = pod.Name,
+                worldPosition = pod:GetPivot().Position,
+                uid = plot.Name.."_"..pod.Name
+            })
+        end
+    end
+end
+
+local function refreshInstantStealAnimals()
+    instantStealAnimals = {}
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return end
+
+    for _, plot in ipairs(plots:GetChildren()) do
+        scanInstantStealPlot(plot)
+    end
+end
 
 local function getPromptPos(prompt)
-	if not prompt or not prompt.Parent then return nil end
+    if not prompt or not prompt.Parent then return nil end
 
-	local p = prompt.Parent
-	if p:IsA("BasePart") then
-		return p.Position
-	end
+    local p = prompt.Parent
+    if p:IsA("BasePart") then
+        return p.Position
+    end
 
-	if p:IsA("Model") then
-		local prim = p.PrimaryPart or p:FindFirstChildWhichIsA("BasePart")
-		return prim and prim.Position
-	end
+    if p:IsA("Model") then
+        local prim = p.PrimaryPart or p:FindFirstChildWhichIsA("BasePart")
+        return prim and prim.Position
+    end
 
-	if p:IsA("Attachment") then
-		return p.WorldPosition
-	end
+    if p:IsA("Attachment") then
+        return p.WorldPosition
+    end
 
-	local part = p:FindFirstChildWhichIsA("BasePart", true)
-	return part and part.Position
+    local part = p:FindFirstChildWhichIsA("BasePart", true)
+    return part and part.Position
 end
 
+local function findPromptForAnimal(ad)
+    if not ad then return nil end
 
-local function findNearestStealPrompt(root)
-	if not root then return nil end
-
-	-- SOLO BUSCAR SI ESTAS EN STEALHITBOX
-	if not isInsideStealHitbox(root) then
-		return nil
-	end
-
-	local plots = workspace:FindFirstChild("Plots")
-	if not plots then return nil end
-
-	local myPos = root.Position
-	local nearest = nil
-	local nearestDist = math.huge
-
-	for _, plot in ipairs(plots:GetChildren()) do
-		for _, obj in ipairs(plot:GetDescendants()) do
-			if obj:IsA("ProximityPrompt") and obj.Enabled and obj.ActionText == "Steal" then
-
-				local pos = getPromptPos(obj)
-
-				if pos then
-					local dist = (myPos - pos).Magnitude
-
-					if dist <= obj.MaxActivationDistance and dist < nearestDist then
-						nearest = obj
-						nearestDist = dist
-					end
-				end
-			end
-		end
-	end
-
-	return nearest
-end
-
-
-local function fireStealPrompt(prompt)
-	if not prompt then return end
-
-	task.spawn(function()
-		pcall(function()
-			fireproximityprompt(prompt, 10000)
-			prompt:InputHoldBegin()
-			task.wait(0.04)
-			prompt:InputHoldEnd()
-		end)
-	end)
-end
-
-local instantPromptCache = {}
-
-local function buildInstantGrabPromptData(prompt)
-    if not prompt then return nil end
-
-    local cached = instantPromptCache[prompt]
-    if cached then
+    local cached = instantStealPrompts[ad.uid]
+    if cached and cached.Parent then
         return cached
     end
+
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil end
+
+    local plot = plots:FindFirstChild(ad.plot)
+    if not plot then return nil end
+
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return nil end
+
+    local pod = podiums:FindFirstChild(ad.slot)
+    if not pod then return nil end
+
+    local base = pod:FindFirstChild("Base")
+    if not base then return nil end
+
+    local spawn = base:FindFirstChild("Spawn")
+    if not spawn then return nil end
+
+    local att = spawn:FindFirstChild("PromptAttachment")
+    if not att then return nil end
+
+    for _, p in ipairs(att:GetChildren()) do
+        if p:IsA("ProximityPrompt") then
+            instantStealPrompts[ad.uid] = p
+            return p
+        end
+    end
+
+    return nil
+end
+
+local function buildStealCallbacks(prompt)
+    if instantStealCallbacks[prompt] then return end
 
     local data = {
         hold = {},
@@ -3174,55 +3186,150 @@ local function buildInstantGrabPromptData(prompt)
 
     pcall(function()
         if getconnections then
-            for _, conn in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
-                if type(conn.Function) == "function" then
-                    table.insert(data.hold, conn.Function)
+            for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
+                if type(c.Function) == "function" then
+                    table.insert(data.hold, c.Function)
                 end
             end
 
-            for _, conn in ipairs(getconnections(prompt.Triggered)) do
-                if type(conn.Function) == "function" then
-                    table.insert(data.trigger, conn.Function)
+            for _, c in ipairs(getconnections(prompt.Triggered)) do
+                if type(c.Function) == "function" then
+                    table.insert(data.trigger, c.Function)
                 end
             end
         end
     end)
 
-    instantPromptCache[prompt] = data
-    return data
+    if #data.hold > 0 or #data.trigger > 0 then
+        instantStealCallbacks[prompt] = data
+    end
 end
 
-local function executeInstantGrabPrompt(prompt, holdDuration)
-    local data = buildInstantGrabPromptData(prompt)
-    if not data then
-        fireStealPrompt(prompt)
-        return
+local function nearestStealAnimal(root)
+    if not root then return nil end
+
+    local best = nil
+    local bestDist = math.huge
+
+    for _, ad in ipairs(instantStealAnimals) do
+        if not isMyBase(ad.plot) and ad.worldPosition then
+            local d = (root.Position - ad.worldPosition).Magnitude
+            if d < bestDist then
+                bestDist = d
+                best = ad
+            end
+        end
     end
 
-    if not data.ready then
-        return
-    end
+    return best, bestDist
+end
+
+local function executeInstantSteal(prompt)
+    local data = instantStealCallbacks[prompt]
+    if not data or not data.ready then return false end
 
     data.ready = false
+    instantStealBusy = true
+    local start = tick()
+
+    progressBarBg.Visible = true
 
     task.spawn(function()
-        if #data.hold > 0 or #data.trigger > 0 then
-            for _, fn in ipairs(data.hold) do
-                task.spawn(fn)
+        while autoStealEnabled and instantStealBusy do
+            local duration = fastStealEnabled and 0.06 or STEAL_DURATION
+            local p = math.clamp((tick() - start) / duration, 0, 1)
+
+            progressFill.Size = UDim2.new(p,0,1,0)
+            percentLabel.Text = math.floor(p*100).."%"
+
+            if p >= 0.99 then
+                break
             end
 
-            task.wait(holdDuration or 0.1)
+            task.wait()
+        end
+    end)
 
-            for _, fn in ipairs(data.trigger) do
-                task.spawn(fn)
-            end
-        else
-            fireStealPrompt(prompt)
+    task.spawn(function()
+        for _, f in ipairs(data.hold) do
+            task.spawn(f)
         end
 
+        task.wait(fastStealEnabled and 0.06 or STEAL_DURATION)
+
+        for _, f in ipairs(data.trigger) do
+            task.spawn(f)
+        end
+
+        instantStealBusy = false
         data.ready = true
     end)
+
+    return true
 end
+
+function StartInstantGrab()
+    if instantStealConn then return end
+
+    refreshInstantStealAnimals()
+
+    instantStealConn = RunService.Heartbeat:Connect(function()
+        if not autoStealEnabled or instantStealBusy then return end
+
+        local char = lp.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not (root and hum and hum.Health > 0) then return end
+
+        local ad, dist = nearestStealAnimal(root)
+        if not ad then return end
+        if dist > grabRadius then return end
+
+        local prompt = findPromptForAnimal(ad)
+        if not prompt or not prompt.Enabled then return end
+
+        local promptPos = getPromptPos(prompt)
+        if not promptPos then return end
+
+        if (root.Position - promptPos).Magnitude > prompt.MaxActivationDistance then
+            return
+        end
+
+        buildStealCallbacks(prompt)
+        executeInstantSteal(prompt)
+    end)
+end
+
+function StopInstantGrab()
+    if instantStealConn then
+        instantStealConn:Disconnect()
+        instantStealConn = nil
+    end
+
+    instantStealBusy = false
+    resetBar(true)
+    hideSquare()
+end
+
+task.spawn(function()
+    local plots = workspace:FindFirstChild("Plots") or workspace:WaitForChild("Plots", 10)
+    if not plots then return end
+
+    refreshInstantStealAnimals()
+
+    plots.ChildAdded:Connect(function(p)
+        if p:IsA("Model") then
+            task.wait(0.5)
+            scanInstantStealPlot(p)
+        end
+    end)
+
+    task.spawn(function()
+        while task.wait(5) do
+            refreshInstantStealAnimals()
+        end
+    end)
+end)
 
 local function resetBar(hide)
     progressFill.Size = UDim2.new(0,0,1,0)
@@ -3230,74 +3337,6 @@ local function resetBar(hide)
     if hide then
         progressBarBg.Visible = false
     end
-end
-
-local function stopInstantGrabCore()
-    autoStealEnabled = false
-
-    if instantGrabLoop then
-        pcall(task.cancel, instantGrabLoop)
-        instantGrabLoop = nil
-    end
-
-    resetBar(true)
-    hideSquare()
-end
-
-local function startInstantGrabCore()
-    stopInstantGrabCore()
-    autoStealEnabled = true
-
-    instantGrabLoop = task.spawn(function()
-        repeat task.wait() until progressBarBg and progressFill and percentLabel
-        progressBarBg.Visible = true
-
-        while autoStealEnabled do
-            local char = lp.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-            if root and hum and hum.Health > 0 then
-                local prompt = findNearestStealPrompt(root)
-
-                if prompt then
-                    local duration = fastStealEnabled and 0.08 or 0.12
-                    local start = tick()
-
-                    while autoStealEnabled and prompt and prompt.Parent and prompt.Enabled do
-                        local pos = getPromptPos(prompt)
-                        if not pos then break end
-
-                        local maxDist = prompt.MaxActivationDistance
-                        if grabRadius and grabRadius > 0 then
-                            maxDist = math.min(maxDist, grabRadius)
-                        end
-
-                        if (root.Position - pos).Magnitude > maxDist then
-                            break
-                        end
-
-                        local p = math.clamp((tick() - start) / duration, 0, 1)
-                        progressFill.Size = UDim2.new(p,0,1,0)
-                        percentLabel.Text = math.floor(p*100).."%"
-
-                        if p >= 0.99 then
-                            executeInstantGrabPrompt(prompt, duration)
-                            start = tick()
-                        end
-
-                        task.wait()
-                    end
-                end
-            end
-
-            resetBar()
-            task.wait(0.08)
-        end
-
-        resetBar(true)
-        hideSquare()
-    end)
 end
 
 --// LOCK TARGET SISTEMA
@@ -4399,10 +4438,15 @@ elseif text == "No Camera Collision" then
     end
 
 elseif text == "Instant Grab" then
+
+    autoStealEnabled = enabled
+
     if enabled then
-        startInstantGrabCore()
+        StartInstantGrab()
+
     else
-        stopInstantGrabCore()
+        autoStealEnabled = false
+        StopInstantGrab()
     end
 end
     end)
@@ -5405,10 +5449,15 @@ elseif text == "Anti Ragdoll" then
                 startAntiSentry()
 
 elseif text == "Instant Grab" then
+
+    autoStealEnabled = enabled
+
     if enabled then
-        startInstantGrabCore()
+        StartInstantGrab()
+
     else
-        stopInstantGrabCore()
+        autoStealEnabled = false
+        StopInstantGrab()
     end
 end
 
