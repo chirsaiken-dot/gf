@@ -2017,6 +2017,8 @@ tabNormal.TextSize = 12
 tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
 tabNormal.Parent = main
 Instance.new("UICorner", tabNormal).CornerRadius = UDim.new(0,6)
+local tabNormalStroke = Instance.new("UIStroke", tabNormal)
+tabNormalStroke.Color = Color3.fromRGB(255,255,255)
 
 local tabDesync = Instance.new("TextButton")
 tabDesync.Size = UDim2.new(0.46,0,0,24)
@@ -2028,12 +2030,18 @@ tabDesync.TextSize = 12
 tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
 tabDesync.Parent = main
 Instance.new("UICorner", tabDesync).CornerRadius = UDim.new(0,6)
+local tabDesyncStroke = Instance.new("UIStroke", tabDesync)
+tabDesyncStroke.Color = Color3.fromRGB(255,255,255)
 
 local function refreshSpeedModeTabs()
     if speedMode == "Desync Speed" then
+        tabDesync.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabNormal.BackgroundColor3 = BUTTON_BLUE
         tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
         tabNormal.TextColor3 = Color3.fromRGB(170,170,170)
     else
+        tabNormal.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabDesync.BackgroundColor3 = BUTTON_BLUE
         tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
         tabDesync.TextColor3 = Color3.fromRGB(170,170,170)
     end
@@ -2126,11 +2134,22 @@ local active = false
 
 local speedConnection
 
-local speedNoStealValue = 52
-
-local speedStealValue = 28
-
 local jumpValue = 50
+
+local function getNormalSpeedValue()
+    return tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+end
+
+local function getDesyncSpeedValue()
+    return tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
+end
+
+local function getSelectedSpeedValue()
+    if speedMode == "Desync Speed" then
+        return getDesyncSpeedValue()
+    end
+    return getNormalSpeedValue()
+end
 
 --// SANITIZE
 
@@ -2174,17 +2193,13 @@ SaveConfig()
 
             if character and hrp and hum then
 
-                speedNoStealValue = tonumber(speedBox.Text) or 53
-
-                speedStealValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
-
                 jumpValue = tonumber(jumpBox.Text) or 60
 
                 local moveDirection = hum.MoveDirection
 
                 if moveDirection.Magnitude > 0 then
 
-                    local currentSpeed = (speedMode == "Desync Speed") and speedStealValue or speedNoStealValue
+                    local currentSpeed = getSelectedSpeedValue()
 
                     hrp.AssemblyLinearVelocity = Vector3.new(
 
@@ -2230,15 +2245,13 @@ if Config["Speed Enabled"] then
 
         if character and hrp and hum then
 
-            speedNoStealValue = tonumber(speedBox.Text) or 53
-            speedStealValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
             jumpValue = tonumber(jumpBox.Text) or 60
 
             local moveDirection = hum.MoveDirection
 
             if moveDirection.Magnitude > 0 then
 
-                local currentSpeed = (speedMode == "Desync Speed") and speedStealValue or speedNoStealValue
+                local currentSpeed = getSelectedSpeedValue()
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
