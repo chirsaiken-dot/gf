@@ -2379,73 +2379,6 @@ local Stats = game:GetService("Stats")
 local lp = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local autoBatActive = false
-local autoBatLoop = nil
-local AUTO_BAT_MIN_DELAY = 0.42
-local AUTO_BAT_MAX_DELAY = 0.72
-
-local function getEquippedBatTool()
-    local char = lp.Character
-    if not char then return nil end
-
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") and string.find(string.lower(tool.Name), "bat", 1, true) then
-            return tool
-        end
-    end
-
-    return nil
-end
-
-local function hasNearbyMeleeTarget(origin, maxRange)
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= lp then
-            local char = plr.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-
-            if hum and root and hum.Health > 0 then
-                if (root.Position - origin).Magnitude <= maxRange then
-                    return true
-                end
-            end
-        end
-    end
-
-    return false
-end
-
-local function stopAutoBat()
-    autoBatActive = false
-    autoBatLoop = nil
-end
-
-local function startAutoBat()
-    if autoBatActive then return end
-
-    autoBatActive = true
-    autoBatLoop = task.spawn(function()
-        while autoBatActive do
-            local char = lp.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local batTool = getEquippedBatTool()
-
-            if hum and root and hum.Health > 0 and batTool then
-                local swingRange = (MELEE_RANGE or 20) + 4
-                if hasNearbyMeleeTarget(root.Position, swingRange) then
-                    pcall(function()
-                        batTool:Activate()
-                    end)
-                end
-            end
-
-            local waitTime = AUTO_BAT_MIN_DELAY + (AUTO_BAT_MAX_DELAY - AUTO_BAT_MIN_DELAY) * math.random()
-            task.wait(waitTime)
-        end
-    end)
-end
-
 local function ApplyToggle(text, enabled)
 
     if text == "No Walk Animation" then
@@ -3343,6 +3276,67 @@ local function getBat()
 	return nil
 end
 
+local autoBatActive = false
+local autoBatLoop = nil
+local autoBatNextSwingAt = 0
+
+local function getAutoBatDelay()
+    return 0.26 + (math.random() * 0.18)
+end
+
+local function shouldAutoBatSwing()
+    local char = lp.Character
+    if not char then return false end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+
+    if not hum or hum.Health <= 0 or not root then
+        return false
+    end
+
+    -- If melee aimbot is enabled, only swing when a valid target is nearby.
+    if meleeEnabled and not getClosestMeleeTarget(root) then
+        return false
+    end
+
+    return true
+end
+
+local function startAutoBat()
+    if autoBatLoop then return end
+
+    autoBatActive = true
+    autoBatNextSwingAt = tick() + getAutoBatDelay()
+
+    autoBatLoop = task.spawn(function()
+        while autoBatActive do
+            local now = tick()
+
+            if now >= autoBatNextSwingAt then
+                if shouldAutoBatSwing() then
+                    local tool = getBat()
+                    if tool and tool.Parent == lp.Character then
+                        pcall(function()
+                            tool:Activate()
+                        end)
+                    end
+                end
+
+                autoBatNextSwingAt = now + getAutoBatDelay()
+            end
+
+            task.wait(0.03)
+        end
+
+        autoBatLoop = nil
+    end)
+end
+
+local function stopAutoBat()
+    autoBatActive = false
+end
+
 local function startLock()
 
 	local char = lp.Character
@@ -4019,6 +4013,7 @@ elseif text == "No Walk Animation" then
 elseif text == "Auto Bat" then
     if enabled then
         startAutoBat()
+
     else
         stopAutoBat()
     end
