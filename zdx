@@ -2017,8 +2017,6 @@ tabNormal.TextSize = 12
 tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
 tabNormal.Parent = main
 Instance.new("UICorner", tabNormal).CornerRadius = UDim.new(0,6)
-local tabNormalStroke = Instance.new("UIStroke", tabNormal)
-tabNormalStroke.Color = Color3.fromRGB(255,255,255)
 
 local tabDesync = Instance.new("TextButton")
 tabDesync.Size = UDim2.new(0.46,0,0,24)
@@ -2030,8 +2028,11 @@ tabDesync.TextSize = 12
 tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
 tabDesync.Parent = main
 Instance.new("UICorner", tabDesync).CornerRadius = UDim.new(0,6)
-local tabDesyncStroke = Instance.new("UIStroke", tabDesync)
-tabDesyncStroke.Color = Color3.fromRGB(255,255,255)
+
+local speedBox
+local speedLabel
+local stealBox
+local stealLabel
 
 local function refreshSpeedModeTabs()
     if speedMode == "Desync Speed" then
@@ -2039,11 +2040,25 @@ local function refreshSpeedModeTabs()
         tabNormal.BackgroundColor3 = BUTTON_BLUE
         tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
         tabNormal.TextColor3 = Color3.fromRGB(170,170,170)
+
+        if speedBox and speedLabel and stealBox and stealLabel then
+            speedBox.Visible = false
+            speedLabel.Visible = false
+            stealBox.Visible = true
+            stealLabel.Visible = true
+        end
     else
         tabNormal.BackgroundColor3 = Color3.fromRGB(0,0,0)
         tabDesync.BackgroundColor3 = BUTTON_BLUE
         tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
         tabDesync.TextColor3 = Color3.fromRGB(170,170,170)
+
+        if speedBox and speedLabel and stealBox and stealLabel then
+            speedBox.Visible = true
+            speedLabel.Visible = true
+            stealBox.Visible = false
+            stealLabel.Visible = false
+        end
     end
 end
 
@@ -2120,13 +2135,15 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Normal Speed",105,53)
-local stealBox, stealLabel = createRow("Desync Speed",140,29)
+speedBox, speedLabel = createRow("Normal Speed",105,53)
+stealBox, stealLabel = createRow("Desync Speed",140,29)
 local jumpBox, jumpLabel = createRow("Jump",175,60)
 
 speedBox.Text = tostring(Config["Speed Value"])
 stealBox.Text = tostring(Config["Desync Speed Value"])
 jumpBox.Text = tostring(Config["Jump Value"])
+
+refreshSpeedModeTabs()
 
 --// VALUES
 
@@ -2134,22 +2151,11 @@ local active = false
 
 local speedConnection
 
+local speedNoStealValue = 52
+
+local speedStealValue = 28
+
 local jumpValue = 50
-
-local function getNormalSpeedValue()
-    return tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
-end
-
-local function getDesyncSpeedValue()
-    return tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
-end
-
-local function getSelectedSpeedValue()
-    if speedMode == "Desync Speed" then
-        return getDesyncSpeedValue()
-    end
-    return getNormalSpeedValue()
-end
 
 --// SANITIZE
 
@@ -2199,7 +2205,13 @@ SaveConfig()
 
                 if moveDirection.Magnitude > 0 then
 
-                    local currentSpeed = getSelectedSpeedValue()
+                    local currentSpeed
+
+                    if speedMode == "Desync Speed" then
+                        currentSpeed = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
+                    else
+                        currentSpeed = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+                    end
 
                     hrp.AssemblyLinearVelocity = Vector3.new(
 
@@ -2251,7 +2263,13 @@ if Config["Speed Enabled"] then
 
             if moveDirection.Magnitude > 0 then
 
-                local currentSpeed = getSelectedSpeedValue()
+                local currentSpeed
+
+                if speedMode == "Desync Speed" then
+                    currentSpeed = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
+                else
+                    currentSpeed = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+                end
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
