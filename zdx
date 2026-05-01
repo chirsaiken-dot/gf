@@ -105,6 +105,7 @@ local Config = {
     -- TEXTBOX VALUES
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
+    ["Desync Speed Value"] = 29,
     ["Speed Mode"] = "Normal",
     ["Jump Value"] = 60,
 
@@ -161,6 +162,11 @@ function SaveConfig()
 end
 
 LoadConfig()
+
+if Config["Desync Speed Value"] == nil then
+    Config["Desync Speed Value"] = Config["Steal Speed Value"] or 29
+    SaveConfig()
+end
 
 task.spawn(function()
     task.wait(1)
@@ -2111,7 +2117,7 @@ local stealBox, stealLabel = createRow("Desync Speed",140,29)
 local jumpBox, jumpLabel = createRow("Jump",175,60)
 
 speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
+stealBox.Text = tostring(Config["Desync Speed Value"])
 jumpBox.Text = tostring(Config["Jump Value"])
 
 --// VALUES
@@ -2146,7 +2152,7 @@ end)
 end
 
 applyInput(speedBox,15,200,53,"Speed Value")
-applyInput(stealBox,15,200,29,"Steal Speed Value")
+applyInput(stealBox,15,200,29,"Desync Speed Value")
 applyInput(jumpBox,50,200,60,"Jump Value")
 
 --// BOTÓN LÓGICA 
@@ -2170,7 +2176,7 @@ SaveConfig()
 
                 speedNoStealValue = tonumber(speedBox.Text) or 53
 
-                speedStealValue = tonumber(stealBox.Text) or 29
+                speedStealValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
 
                 jumpValue = tonumber(jumpBox.Text) or 60
 
@@ -2225,7 +2231,7 @@ if Config["Speed Enabled"] then
         if character and hrp and hum then
 
             speedNoStealValue = tonumber(speedBox.Text) or 53
-            speedStealValue = tonumber(stealBox.Text) or 29
+            speedStealValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
             jumpValue = tonumber(jumpBox.Text) or 60
 
             local moveDirection = hum.MoveDirection
