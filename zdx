@@ -117,6 +117,12 @@ local Config = {
     ["Spin Speed"] = 40,
     ["FOV Value"] = 90,
 
+    ["Keybind Toggle Hub"] = "ButtonY",
+    ["Keybind Lock Target"] = "ButtonX",
+    ["Keybind Fling"] = "ButtonR1",
+    ["Keybind TP Down"] = "ButtonB",
+    ["Keybind Manual TP"] = "DPadUp",
+
     -- AUTOPLAY POINTS
     ["AutoPlay Point1 X"] = 1,
     ["AutoPlay Point1 Z"] = 1,
@@ -167,6 +173,23 @@ if Config["Desync Speed Value"] == nil then
     Config["Desync Speed Value"] = Config["Steal Speed Value"] or 29
     SaveConfig()
 end
+
+if Config["Keybind Toggle Hub"] == nil then
+    Config["Keybind Toggle Hub"] = "ButtonY"
+end
+if Config["Keybind Lock Target"] == nil then
+    Config["Keybind Lock Target"] = "ButtonX"
+end
+if Config["Keybind Fling"] == nil then
+    Config["Keybind Fling"] = "ButtonR1"
+end
+if Config["Keybind TP Down"] == nil then
+    Config["Keybind TP Down"] = "ButtonB"
+end
+if Config["Keybind Manual TP"] == nil then
+    Config["Keybind Manual TP"] = "DPadUp"
+end
+SaveConfig()
 
 task.spawn(function()
     task.wait(1)
@@ -3276,67 +3299,6 @@ local function getBat()
 	return nil
 end
 
-local autoBatActive = false
-local autoBatLoop = nil
-local autoBatNextSwingAt = 0
-
-local function getAutoBatDelay()
-    return 0.26 + (math.random() * 0.18)
-end
-
-local function shouldAutoBatSwing()
-    local char = lp.Character
-    if not char then return false end
-
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    local root = char:FindFirstChild("HumanoidRootPart")
-
-    if not hum or hum.Health <= 0 or not root then
-        return false
-    end
-
-    -- If melee aimbot is enabled, only swing when a valid target is nearby.
-    if meleeEnabled and not getClosestMeleeTarget(root) then
-        return false
-    end
-
-    return true
-end
-
-local function startAutoBat()
-    if autoBatLoop then return end
-
-    autoBatActive = true
-    autoBatNextSwingAt = tick() + getAutoBatDelay()
-
-    autoBatLoop = task.spawn(function()
-        while autoBatActive do
-            local now = tick()
-
-            if now >= autoBatNextSwingAt then
-                if shouldAutoBatSwing() then
-                    local tool = getBat()
-                    if tool and tool.Parent == lp.Character then
-                        pcall(function()
-                            tool:Activate()
-                        end)
-                    end
-                end
-
-                autoBatNextSwingAt = now + getAutoBatDelay()
-            end
-
-            task.wait(0.03)
-        end
-
-        autoBatLoop = nil
-    end)
-end
-
-local function stopAutoBat()
-    autoBatActive = false
-end
-
 local function startLock()
 
 	local char = lp.Character
@@ -3725,7 +3687,7 @@ function RemoveTPDownButton()
 end
 
 -- SECCIONES Y TOGGLES
-local sections = {"Combat","Player","Visual","Settings"}
+local sections = {"Combat","Player","Visual","Settings","Keybinds"}
 local sectionButtons = {}
 local frames = {}
 
@@ -4011,11 +3973,33 @@ elseif text == "No Walk Animation" then
     end
 
 elseif text == "Auto Bat" then
+    autoBatActive = enabled
+
     if enabled then
-        startAutoBat()
+        if autoBatLoop then
+            autoBatActive = false
+            autoBatLoop = nil
+        end
+
+        autoBatActive = true
+
+        autoBatLoop = task.spawn(function()
+            while autoBatActive do
+                local char = lp.Character
+                if char then
+                    local tool = char:FindFirstChild("Bat")
+                    if tool and tool:IsA("Tool") then
+                        pcall(function()
+                            tool:Activate()
+                        end)
+                    end
+                end
+                task.wait(0.4) -- velocidad del golpe
+            end
+        end)
 
     else
-        stopAutoBat()
+        autoBatActive = false
     end
 
 elseif text == "Lock Target" then
@@ -4828,16 +4812,170 @@ do
     end)
 end
 
+-- Controller keybinds
+do
+    local parentFrame = frames["Keybinds"]
+
+    local function normalizeKeybindName(raw)
+        if typeof(raw) ~= "string" then return nil end
+        local trimmed = raw:gsub("^%s+", ""):gsub("%s+$", "")
+        if trimmed == "" then return nil end
+        if Enum.KeyCode[trimmed] then
+            return trimmed
+        end
+        return nil
+    end
+
+    local function createKeybindRow(labelText, configKey, fallback)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1,0,0,45)
+        container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+        container.BackgroundTransparency = 0.2
+        container.Parent = parentFrame
+        Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
+        Instance.new("UIStroke", container).Color = Color3.fromRGB(255,255,255)
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.6,0,1,0)
+        label.Position = UDim2.new(0,12,0,0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 14
+        label.TextColor3 = Color3.fromRGB(255,255,255)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Text = labelText
+        label.Parent = container
+
+        local textbox = Instance.new("TextBox")
+        textbox.Size = UDim2.new(0,90,0,30)
+        textbox.Position = UDim2.new(1,-100,0.5,-15)
+        textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+        textbox.TextColor3 = Color3.new(1,1,1)
+        textbox.Font = Enum.Font.Gotham
+        textbox.TextSize = 13
+        textbox.Text = tostring(Config[configKey] or fallback)
+        textbox.ClearTextOnFocus = false
+        textbox.Parent = container
+        Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,6)
+        Instance.new("UIStroke", textbox).Color = Color3.fromRGB(255,255,255)
+
+        textbox.FocusLost:Connect(function(enterPressed)
+            if not enterPressed then
+                textbox.Text = tostring(Config[configKey] or fallback)
+                return
+            end
+
+            local sanitized = normalizeKeybindName(textbox.Text)
+            if sanitized then
+                Config[configKey] = sanitized
+                textbox.Text = sanitized
+                SaveConfig()
+            else
+                textbox.Text = tostring(Config[configKey] or fallback)
+            end
+        end)
+    end
+
+    createKeybindRow("Toggle Hub", "Keybind Toggle Hub", "ButtonY")
+    createKeybindRow("Lock Target", "Keybind Lock Target", "ButtonX")
+    createKeybindRow("Fling", "Keybind Fling", "ButtonR1")
+    createKeybindRow("TP Down", "Keybind TP Down", "ButtonB")
+    createKeybindRow("Manual TP", "Keybind Manual TP", "DPadUp")
+end
+
 ShowSection("Combat")
 
 -- OPEN / CLOSE HUB
 local opened = false
-toggleBtn.MouseButton1Click:Connect(function()
+
+local function toggleHubPanel()
     opened = not opened
     if opened then
         TweenService:Create(hub, TweenInfo.new(0.3), {Position = UDim2.new(0,20,0.5,-HUB_HEIGHT/2)}):Play()
     else
         TweenService:Create(hub, TweenInfo.new(0.3), {Position = UDim2.new(0,-350,0.5,-HUB_HEIGHT/2)}):Play()
+    end
+end
+
+toggleBtn.MouseButton1Click:Connect(toggleHubPanel)
+
+local function getBoundKeyCode(configKey)
+    local keyName = Config[configKey]
+    if typeof(keyName) ~= "string" or keyName == "" then
+        return nil
+    end
+    return Enum.KeyCode[keyName]
+end
+
+local function updateLockButtonVisual(state)
+    if not lockGui then return end
+    local btn = lockGui:FindFirstChildWhichIsA("TextButton", true)
+    if btn then
+        btn.Text = state and "LOCKED" or "LOCK"
+        btn.BackgroundColor3 = BUTTON_BLUE
+    end
+end
+
+local function setLockTargetState(state)
+    lockEnabled = state
+    if state then
+        startLock()
+    else
+        stopLock()
+    end
+    updateLockButtonVisual(state)
+end
+
+local function updateFlingButtonVisual(state)
+    if not flingGui then return end
+    local btn = flingGui:FindFirstChildWhichIsA("TextButton", true)
+    if btn then
+        btn.Text = state and "FLING ON" or "FLING"
+        btn.BackgroundColor3 = BUTTON_BLUE
+    end
+end
+
+local function setFlingState(state)
+    flingActive = state
+    if state then
+        startFling()
+    else
+        stopFling()
+    end
+    updateFlingButtonVisual(state)
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if UserInputService:GetFocusedTextBox() then return end
+
+    local key = input.KeyCode
+    if key == Enum.KeyCode.Unknown then return end
+
+    if key == getBoundKeyCode("Keybind Toggle Hub") then
+        toggleHubPanel()
+        return
+    end
+
+    if key == getBoundKeyCode("Keybind Lock Target") then
+        setLockTargetState(not lockEnabled)
+        return
+    end
+
+    if key == getBoundKeyCode("Keybind Fling") then
+        setFlingState(not flingActive)
+        return
+    end
+
+    if key == getBoundKeyCode("Keybind TP Down") then
+        doTPDown()
+        return
+    end
+
+    if key == getBoundKeyCode("Keybind Manual TP") then
+        if ManualTPEnabled then
+            doTP()
+        end
     end
 end)
 
@@ -4962,7 +5100,22 @@ elseif text == "No Walk Animation" then
     end
 
             elseif text == "Auto Bat" then
-                startAutoBat()
+                autoBatActive = true
+
+                task.spawn(function()
+                    while autoBatActive do
+                        local char = lp.Character
+                        if char then
+                            local tool = char:FindFirstChild("Bat")
+                            if tool then
+                                pcall(function()
+                                    tool:Activate()
+                                end)
+                            end
+                        end
+                        task.wait(0.4)
+                    end
+                end)
 
             elseif text == "Auto Medusa" then
                 AutoMedusaEnabled = true
