@@ -2034,12 +2034,12 @@ local function refreshSpeedModeTabs()
         tabDesync.BackgroundColor3 = Color3.fromRGB(0,0,0)
         tabNormal.BackgroundColor3 = BUTTON_BLUE
         tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
-        tabNormal.TextColor3 = Color3.fromRGB(210,210,210)
+        tabNormal.TextColor3 = Color3.fromRGB(170,170,170)
     else
         tabNormal.BackgroundColor3 = Color3.fromRGB(0,0,0)
         tabDesync.BackgroundColor3 = BUTTON_BLUE
         tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
-        tabDesync.TextColor3 = Color3.fromRGB(210,210,210)
+        tabDesync.TextColor3 = Color3.fromRGB(170,170,170)
     end
 end
 
@@ -2048,13 +2048,6 @@ local function setSpeedMode(mode)
     Config["Speed Mode"] = mode
     SaveConfig()
     refreshSpeedModeTabs()
-    if speedLabel and speedBox and stealLabel and stealBox then
-        local normalVisible = (speedMode == "Normal")
-        speedLabel.Visible = normalVisible
-        speedBox.Visible = normalVisible
-        stealLabel.Visible = not normalVisible
-        stealBox.Visible = not normalVisible
-    end
 end
 
 tabNormal.MouseButton1Click:Connect(function()
@@ -2131,17 +2124,15 @@ speedBox.Text = tostring(Config["Speed Value"])
 stealBox.Text = tostring(Config["Desync Speed Value"])
 jumpBox.Text = tostring(Config["Jump Value"])
 
-setSpeedMode(speedMode)
-
 --// VALUES
 
 local active = false
 
 local speedConnection
 
-local speedNoStealValue = 52
+local normalSpeedValue = 52
 
-local speedDesyncValue = 28
+local desyncSpeedValue = 28
 
 local jumpValue = 50
 
@@ -2187,9 +2178,9 @@ SaveConfig()
 
             if character and hrp and hum then
 
-                speedNoStealValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+                normalSpeedValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
 
-                speedDesyncValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
+                desyncSpeedValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
 
                 jumpValue = tonumber(jumpBox.Text) or 60
 
@@ -2197,7 +2188,7 @@ SaveConfig()
 
                 if moveDirection.Magnitude > 0 then
 
-                    local currentSpeed = (speedMode == "Desync Speed") and speedDesyncValue or speedNoStealValue
+                    local currentSpeed = (speedMode == "Desync Speed") and desyncSpeedValue or normalSpeedValue
 
                     hrp.AssemblyLinearVelocity = Vector3.new(
 
@@ -2243,15 +2234,15 @@ if Config["Speed Enabled"] then
 
         if character and hrp and hum then
 
-            speedNoStealValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
-            speedDesyncValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
+            normalSpeedValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+            desyncSpeedValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
             jumpValue = tonumber(jumpBox.Text) or 60
 
             local moveDirection = hum.MoveDirection
 
             if moveDirection.Magnitude > 0 then
 
-                local currentSpeed = (speedMode == "Desync Speed") and speedDesyncValue or speedNoStealValue
+                local currentSpeed = (speedMode == "Desync Speed") and desyncSpeedValue or normalSpeedValue
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
@@ -2390,20 +2381,11 @@ local RunService = game:GetService("RunService")
 
 local autoBatActive = false
 local autoBatLoop = nil
+local AUTO_BAT_MIN_DELAY = 0.42
+local AUTO_BAT_MAX_DELAY = 0.72
 
-local function isTouchSwingBlocked()
-    if not UserInputService or not UserInputService.TouchEnabled then
-        return false
-    end
-
-    local ok, touches = pcall(function()
-        return UserInputService:GetTouches()
-    end)
-
-    return ok and touches and #touches > 0
-end
-
-local function getEquippedBatTool(char)
+local function getEquippedBatTool()
+    local char = lp.Character
     if not char then return nil end
 
     for _, tool in ipairs(char:GetChildren()) do
@@ -2415,39 +2397,53 @@ local function getEquippedBatTool(char)
     return nil
 end
 
-local function startAutoBat()
-    if autoBatLoop then return end
+local function hasNearbyMeleeTarget(origin, maxRange)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= lp then
+            local char = plr.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
 
-    autoBatActive = true
-
-    autoBatLoop = task.spawn(function()
-        while autoBatActive do
-            local char = lp.Character
-
-            if char and not isTouchSwingBlocked() then
-                local tool = getEquippedBatTool(char)
-
-                if tool then
-                    pcall(function()
-                        tool:Activate()
-                    end)
+            if hum and root and hum.Health > 0 then
+                if (root.Position - origin).Magnitude <= maxRange then
+                    return true
                 end
             end
-
-            task.wait(0.26 + math.random() * 0.20)
         end
+    end
 
-        autoBatLoop = nil
-    end)
+    return false
 end
 
 local function stopAutoBat()
     autoBatActive = false
+    autoBatLoop = nil
+end
 
-    if autoBatLoop then
-        pcall(task.cancel, autoBatLoop)
-        autoBatLoop = nil
-    end
+local function startAutoBat()
+    if autoBatActive then return end
+
+    autoBatActive = true
+    autoBatLoop = task.spawn(function()
+        while autoBatActive do
+            local char = lp.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local batTool = getEquippedBatTool()
+
+            if hum and root and hum.Health > 0 and batTool then
+                local swingRange = (MELEE_RANGE or 20) + 4
+                if hasNearbyMeleeTarget(root.Position, swingRange) then
+                    pcall(function()
+                        batTool:Activate()
+                    end)
+                end
+            end
+
+            local waitTime = AUTO_BAT_MIN_DELAY + (AUTO_BAT_MAX_DELAY - AUTO_BAT_MIN_DELAY) * math.random()
+            task.wait(waitTime)
+        end
+    end)
 end
 
 local function ApplyToggle(text, enabled)
