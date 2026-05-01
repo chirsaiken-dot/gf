@@ -105,6 +105,8 @@ local Config = {
     -- TEXTBOX VALUES
     ["Speed Value"] = 53,
     ["Steal Speed Value"] = 29,
+    ["Desync Speed Value"] = 29,
+    ["Speed Mode"] = "Normal",
     ["Jump Value"] = 60,
 
     ["AutoPlay Speed"] = 51,
@@ -160,6 +162,11 @@ function SaveConfig()
 end
 
 LoadConfig()
+
+if Config["Desync Speed Value"] == nil then
+    Config["Desync Speed Value"] = Config["Steal Speed Value"] or 29
+    SaveConfig()
+end
 
 task.spawn(function()
     task.wait(1)
@@ -1884,7 +1891,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 
-main.Size = UDim2.new(0,200,0,185)
+main.Size = UDim2.new(0,200,0,220)
 
 main.Position = UDim2.new(
     Config["Speed GUI X"],
@@ -1996,6 +2003,63 @@ local activateStroke = Instance.new("UIStroke", activate)
 
 activateStroke.Color = Color3.fromRGB(255,255,255)
 
+--// SPEED MODE TABS
+
+local speedMode = (Config["Speed Mode"] == "Desync Speed") and "Desync Speed" or "Normal"
+
+local tabNormal = Instance.new("TextButton")
+tabNormal.Size = UDim2.new(0.46,0,0,24)
+tabNormal.Position = UDim2.new(0.03,0,0,70)
+tabNormal.BackgroundColor3 = BUTTON_BLUE
+tabNormal.Text = "Normal"
+tabNormal.Font = Enum.Font.GothamBold
+tabNormal.TextSize = 12
+tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
+tabNormal.Parent = main
+Instance.new("UICorner", tabNormal).CornerRadius = UDim.new(0,6)
+
+local tabDesync = Instance.new("TextButton")
+tabDesync.Size = UDim2.new(0.46,0,0,24)
+tabDesync.Position = UDim2.new(0.51,0,0,70)
+tabDesync.BackgroundColor3 = BUTTON_BLUE
+tabDesync.Text = "Desync Speed"
+tabDesync.Font = Enum.Font.GothamBold
+tabDesync.TextSize = 12
+tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
+tabDesync.Parent = main
+Instance.new("UICorner", tabDesync).CornerRadius = UDim.new(0,6)
+
+local function refreshSpeedModeTabs()
+    if speedMode == "Desync Speed" then
+        tabDesync.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabNormal.BackgroundColor3 = BUTTON_BLUE
+        tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
+        tabNormal.TextColor3 = Color3.fromRGB(170,170,170)
+    else
+        tabNormal.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabDesync.BackgroundColor3 = BUTTON_BLUE
+        tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
+        tabDesync.TextColor3 = Color3.fromRGB(170,170,170)
+    end
+end
+
+local function setSpeedMode(mode)
+    speedMode = mode
+    Config["Speed Mode"] = mode
+    SaveConfig()
+    refreshSpeedModeTabs()
+end
+
+tabNormal.MouseButton1Click:Connect(function()
+    setSpeedMode("Normal")
+end)
+
+tabDesync.MouseButton1Click:Connect(function()
+    setSpeedMode("Desync Speed")
+end)
+
+refreshSpeedModeTabs()
+
 --// CREAR ROW FUNCIÓN 
 
 local function createRow(text,posY,default)
@@ -2052,12 +2116,12 @@ end
 
 --// ROWS
 
-local speedBox, speedLabel = createRow("Speed",75,53)
-local stealBox, stealLabel = createRow("Steal Speed",110,29)
-local jumpBox, jumpLabel = createRow("Jump",145,60)
+local speedBox, speedLabel = createRow("Normal Speed",105,53)
+local stealBox, stealLabel = createRow("Desync Speed",140,29)
+local jumpBox, jumpLabel = createRow("Jump",175,60)
 
 speedBox.Text = tostring(Config["Speed Value"])
-stealBox.Text = tostring(Config["Steal Speed Value"])
+stealBox.Text = tostring(Config["Desync Speed Value"])
 jumpBox.Text = tostring(Config["Jump Value"])
 
 --// VALUES
@@ -2066,9 +2130,9 @@ local active = false
 
 local speedConnection
 
-local speedNoStealValue = 52
+local normalSpeedValue = 52
 
-local speedStealValue = 28
+local desyncSpeedValue = 28
 
 local jumpValue = 50
 
@@ -2092,7 +2156,7 @@ end)
 end
 
 applyInput(speedBox,15,200,53,"Speed Value")
-applyInput(stealBox,15,200,29,"Steal Speed Value")
+applyInput(stealBox,15,200,29,"Desync Speed Value")
 applyInput(jumpBox,50,200,60,"Jump Value")
 
 --// BOTÓN LÓGICA 
@@ -2114,9 +2178,9 @@ SaveConfig()
 
             if character and hrp and hum then
 
-                speedNoStealValue = tonumber(speedBox.Text) or 53
+                normalSpeedValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
 
-                speedStealValue = tonumber(stealBox.Text) or 29
+                desyncSpeedValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
 
                 jumpValue = tonumber(jumpBox.Text) or 60
 
@@ -2124,9 +2188,7 @@ SaveConfig()
 
                 if moveDirection.Magnitude > 0 then
 
-                    local isSteal = hum.WalkSpeed < 25
-
-                    local currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                    local currentSpeed = (speedMode == "Desync Speed") and desyncSpeedValue or normalSpeedValue
 
                     hrp.AssemblyLinearVelocity = Vector3.new(
 
@@ -2172,16 +2234,15 @@ if Config["Speed Enabled"] then
 
         if character and hrp and hum then
 
-            speedNoStealValue = tonumber(speedBox.Text) or 53
-            speedStealValue = tonumber(stealBox.Text) or 29
+            normalSpeedValue = tonumber(speedBox.Text) or tonumber(Config["Speed Value"]) or 53
+            desyncSpeedValue = tonumber(stealBox.Text) or tonumber(Config["Desync Speed Value"]) or 29
             jumpValue = tonumber(jumpBox.Text) or 60
 
             local moveDirection = hum.MoveDirection
 
             if moveDirection.Magnitude > 0 then
 
-                local isSteal = hum.WalkSpeed < 25
-                local currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                local currentSpeed = (speedMode == "Desync Speed") and desyncSpeedValue or normalSpeedValue
 
                 hrp.AssemblyLinearVelocity = Vector3.new(
                     moveDirection.X * currentSpeed,
@@ -2242,6 +2303,8 @@ end)
 -- ======================
 
 local elementsToHide = {
+tabNormal,
+tabDesync,
 speedBox,
 stealBox,
 jumpBox,
@@ -2291,7 +2354,7 @@ minimizeButton.Text = "▲"
 local tween = TweenService:Create(
 main,
 TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-{Size = UDim2.new(0,200,0,185)}
+{Size = UDim2.new(0,200,0,220)}
 )
 
 tween:Play()
