@@ -93,7 +93,7 @@ local Config = {
     ["AutoPlay GUI OffsetY"] = 0,
 
     ["Lagger GUI X"] = 0.5,
-    ["Lagger GUI Y"] = 0.28,
+    ["Lagger GUI Y"] = 0.3,
     ["Lagger GUI OffsetX"] = -100,
     ["Lagger GUI OffsetY"] = 0,
 
@@ -1815,6 +1815,110 @@ local function destroyAutoPlayGui()
 
 end
 
+local function updateLaggerButtonVisual()
+    if laggerMainButton then
+        laggerMainButton.Text = laggerRuntimeEnabled and "ON" or "OFF"
+        laggerMainButton.BackgroundColor3 = BUTTON_BLUE
+    end
+end
+
+local function setLaggerState(state)
+    laggerRuntimeEnabled = state
+
+    pcall(function()
+        raknet.desync(state)
+    end)
+
+    updateLaggerButtonVisual()
+end
+
+local function createLaggerGui()
+    if laggerGui then return end
+
+    laggerGui = Instance.new("ScreenGui")
+    laggerGui.Name = "LaggerPanelGui"
+    laggerGui.ResetOnSpawn = false
+    laggerGui.Parent = player:WaitForChild("PlayerGui")
+
+    local main = Instance.new("Frame")
+    main.Size = UDim2.new(0,200,0,85)
+    main.Position = UDim2.new(
+        Config["Lagger GUI X"],
+        Config["Lagger GUI OffsetX"],
+        Config["Lagger GUI Y"],
+        Config["Lagger GUI OffsetY"]
+    )
+    main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    main.BackgroundTransparency = 0.35
+    main.Parent = laggerGui
+
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255,255,255)
+    stroke.Thickness = 2
+    stroke.Parent = main
+
+    local dragHandle = Instance.new("Frame")
+    dragHandle.Size = UDim2.new(1,0,0,30)
+    dragHandle.BackgroundTransparency = 1
+    dragHandle.Parent = main
+
+    main.Active = true
+    main.Draggable = not UILocked
+
+    main:GetPropertyChangedSignal("Position"):Connect(function()
+        Config["Lagger GUI X"] = main.Position.X.Scale
+        Config["Lagger GUI OffsetX"] = main.Position.X.Offset
+        Config["Lagger GUI Y"] = main.Position.Y.Scale
+        Config["Lagger GUI OffsetY"] = main.Position.Y.Offset
+        SaveConfig()
+    end)
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1,-40,0,30)
+    title.Position = UDim2.new(0,30,0,0)
+    title.BackgroundTransparency = 1
+    title.Text = "Lagger"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 15
+    title.TextColor3 = Color3.fromRGB(255,255,255)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = main
+
+    laggerMainButton = Instance.new("TextButton")
+    laggerMainButton.Size = UDim2.new(0,180,0,34)
+    laggerMainButton.Position = UDim2.new(0.5,-90,0,36)
+    laggerMainButton.BackgroundColor3 = BUTTON_BLUE
+    laggerMainButton.TextColor3 = Color3.fromRGB(255,255,255)
+    laggerMainButton.TextSize = 14
+    laggerMainButton.Font = Enum.Font.GothamBold
+    laggerMainButton.Parent = main
+
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Color = Color3.fromRGB(255,255,255)
+    buttonStroke.Thickness = 1
+    buttonStroke.Parent = laggerMainButton
+
+    Instance.new("UICorner", laggerMainButton).CornerRadius = UDim.new(0,6)
+
+    laggerMainButton.MouseButton1Click:Connect(function()
+        setLaggerState(not laggerRuntimeEnabled)
+    end)
+
+    updateLaggerButtonVisual()
+end
+
+local function destroyLaggerGui()
+    setLaggerState(false)
+
+    if laggerGui then
+        laggerGui:Destroy()
+        laggerGui = nil
+        laggerMainButton = nil
+    end
+end
+
 
 --// ANTI RAGDOLL NUEVO (MEJORADO)
 
@@ -2455,7 +2559,6 @@ local function ApplyToggle(text, enabled)
                 repeat task.wait() until progressBarBg and progressFill and percentLabel
 
                 progressBarBg.Visible = true
-                progressRadiusBox.Visible = true
 
                 if instantGrabConnection then
                     instantGrabConnection:Disconnect()
@@ -2477,7 +2580,6 @@ local function ApplyToggle(text, enabled)
 
                             if prompt then
                                 progressBarBg.Visible = true
-                                progressRadiusBox.Visible = true
                                 local start = tick()
 
                                 while autoStealEnabled and findNearestSteal(root) == prompt do
@@ -2991,28 +3093,25 @@ percentLabel.Text = "0%"
 percentLabel.Visible = false
 percentLabel.Parent = progressShadow
 
-local progressRadiusBox = Instance.new("TextBox")
-progressRadiusBox.Size = UDim2.new(0,42,0,42)
-progressRadiusBox.Position = UDim2.new(0.5,126,0,40)
-progressRadiusBox.BackgroundColor3 = Color3.fromRGB(100,180,255)
-progressRadiusBox.TextColor3 = Color3.fromRGB(255,255,255)
-progressRadiusBox.Font = Enum.Font.GothamBold
-progressRadiusBox.TextSize = 12
-progressRadiusBox.Text = "10"
-progressRadiusBox.ClearTextOnFocus = false
-progressRadiusBox.Visible = false
-progressRadiusBox.Parent = sg
-Instance.new("UICorner", progressRadiusBox).CornerRadius = UDim.new(1,0)
+local grabRadiusTextbox = Instance.new("TextBox")
+grabRadiusTextbox.Size = UDim2.new(0,38,0,38)
+grabRadiusTextbox.Position = UDim2.new(0.5,128,0,42)
+grabRadiusTextbox.BackgroundColor3 = Color3.fromRGB(100,180,255)
+grabRadiusTextbox.TextColor3 = Color3.fromRGB(255,255,255)
+grabRadiusTextbox.Font = Enum.Font.GothamBold
+grabRadiusTextbox.TextSize = 12
+grabRadiusTextbox.ClearTextOnFocus = false
+grabRadiusTextbox.Parent = sg
+Instance.new("UICorner", grabRadiusTextbox).CornerRadius = UDim.new(1,0)
 
-local radiusStroke = Instance.new("UIStroke")
-radiusStroke.Color = Color3.fromRGB(173,225,255)
-radiusStroke.Thickness = 1.5
-radiusStroke.Parent = progressRadiusBox
+local grabRadiusStroke = Instance.new("UIStroke")
+grabRadiusStroke.Color = Color3.fromRGB(173,225,255)
+grabRadiusStroke.Thickness = 1.5
+grabRadiusStroke.Parent = grabRadiusTextbox
 
 -- RADIO CÍRCULAR EN EL SUELO
 local stealSquarePart = nil
 local circleConnection = nil
-local radioTextbox
 
 local function hideSquare()
     if stealSquarePart then
@@ -3022,44 +3121,6 @@ local function hideSquare()
 end
 
 local grabRadius = 10
-
-local function syncGrabRadiusText()
-    local text = tostring(grabRadius)
-
-    progressRadiusBox.Text = text
-
-    if radioTextbox and radioTextbox.Parent then
-        radioTextbox.Text = text
-    end
-end
-
-local function setGrabRadius(value)
-    local numeric = tonumber(value)
-    if not numeric then
-        syncGrabRadiusText()
-        return false
-    end
-
-    grabRadius = math.clamp(math.floor(numeric + 0.5), 1, 1000)
-    syncGrabRadiusText()
-
-    if stealSquarePart then
-        stealSquarePart.Size = Vector3.new(0.05, grabRadius * 2, grabRadius * 2)
-    end
-
-    return true
-end
-
-progressRadiusBox.FocusLost:Connect(function(enterPressed)
-    if not enterPressed then
-        syncGrabRadiusText()
-        return
-    end
-
-    if not setGrabRadius(progressRadiusBox.Text) then
-        syncGrabRadiusText()
-    end
-end)
 
 local function createOrUpdateSquare(radius)
     if not stealSquarePart then
@@ -3083,7 +3144,30 @@ local function createOrUpdateSquare(radius)
     end
 end
 
-syncGrabRadiusText()
+local function syncGrabRadiusTextbox()
+    if grabRadiusTextbox then
+        grabRadiusTextbox.Text = tostring(grabRadius)
+    end
+end
+
+syncGrabRadiusTextbox()
+
+grabRadiusTextbox.FocusLost:Connect(function(enterPressed)
+    if not enterPressed then
+        syncGrabRadiusTextbox()
+        return
+    end
+
+    local num = tonumber(grabRadiusTextbox.Text)
+    if num and num > 0 and num <= 1000 then
+        grabRadius = num
+        if stealSquarePart then
+            stealSquarePart.Size = Vector3.new(0.05, grabRadius * 2, grabRadius * 2)
+        end
+    end
+
+    syncGrabRadiusTextbox()
+end)
 
 local function updateSquarePosition()
     if stealSquarePart and lp.Character then
@@ -3201,115 +3285,8 @@ local dropBrainrotRunning = false
 local fastStealEnabled = false
 local normalGrabRadius = grabRadius
 local laggerGui
-local laggerActive = false
-
-local function updateLaggerVisual(state)
-    if not laggerGui then return end
-
-    local actionButton = laggerGui:FindFirstChild("ActionButton", true)
-    if actionButton then
-        actionButton.Text = state and "ON" or "OFF"
-        actionButton.BackgroundColor3 = BUTTON_BLUE
-    end
-end
-
-local function setLaggerState(state)
-    laggerActive = state
-
-    pcall(function()
-        raknet.desync(laggerActive)
-    end)
-
-    updateLaggerVisual(state)
-end
-
-local function createLaggerGui()
-    if laggerGui then
-        updateLaggerVisual(laggerActive)
-        return
-    end
-
-    laggerGui = Instance.new("ScreenGui")
-    laggerGui.Name = "LaggerGUI"
-    laggerGui.ResetOnSpawn = false
-    laggerGui.Parent = lp:WaitForChild("PlayerGui")
-
-    local main = Instance.new("Frame")
-    main.Size = UDim2.new(0,200,0,78)
-    main.Position = UDim2.new(
-        Config["Lagger GUI X"],
-        Config["Lagger GUI OffsetX"],
-        Config["Lagger GUI Y"],
-        Config["Lagger GUI OffsetY"]
-    )
-    main.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    main.BackgroundTransparency = 0.35
-    main.Parent = laggerGui
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255,255,255)
-    stroke.Thickness = 2
-    stroke.Parent = main
-
-    local dragHandle = Instance.new("Frame")
-    dragHandle.Size = UDim2.new(1,0,0,30)
-    dragHandle.BackgroundTransparency = 1
-    dragHandle.Parent = main
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1,-40,0,30)
-    title.Position = UDim2.new(0,30,0,0)
-    title.BackgroundTransparency = 1
-    title.Text = "Lagger"
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 15
-    title.TextColor3 = Color3.fromRGB(255,255,255)
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = main
-
-    local actionButton = Instance.new("TextButton")
-    actionButton.Name = "ActionButton"
-    actionButton.Size = UDim2.new(0,180,0,34)
-    actionButton.Position = UDim2.new(0.5,-90,0,30)
-    actionButton.BackgroundColor3 = BUTTON_BLUE
-    actionButton.TextColor3 = Color3.fromRGB(255,255,255)
-    actionButton.TextSize = 14
-    actionButton.Font = Enum.Font.GothamBold
-    actionButton.Parent = main
-    Instance.new("UICorner", actionButton).CornerRadius = UDim.new(0,6)
-
-    local buttonStroke = Instance.new("UIStroke")
-    buttonStroke.Color = Color3.fromRGB(255,255,255)
-    buttonStroke.Thickness = 1
-    buttonStroke.Parent = actionButton
-
-    main.Active = true
-    main.Draggable = not UILocked
-
-    main:GetPropertyChangedSignal("Position"):Connect(function()
-        Config["Lagger GUI X"] = main.Position.X.Scale
-        Config["Lagger GUI OffsetX"] = main.Position.X.Offset
-        Config["Lagger GUI Y"] = main.Position.Y.Scale
-        Config["Lagger GUI OffsetY"] = main.Position.Y.Offset
-        SaveConfig()
-    end)
-
-    actionButton.MouseButton1Click:Connect(function()
-        setLaggerState(not laggerActive)
-    end)
-
-    updateLaggerVisual(laggerActive)
-end
-
-local function destroyLaggerGui()
-    setLaggerState(false)
-
-    if laggerGui then
-        laggerGui:Destroy()
-        laggerGui = nil
-    end
-end
+local laggerMainButton
+local laggerRuntimeEnabled = false
 
 --// AUTO STEAL / INSTANT GRAB (LOGICA VANDER + STEALHITBOX)
 
@@ -3414,7 +3391,6 @@ local function resetBar(hide)
     percentLabel.Text = "0%"
     if hide then
         progressBarBg.Visible = false
-        progressRadiusBox.Visible = false
     end
 end
 
@@ -3926,53 +3902,6 @@ end
 
 local function CreateToggle(sectionName,text)
     local parentFrame = frames[sectionName]
-
-    if text == "Radio Steal Nearest" and sectionName == "Settings" then
-        local container = Instance.new("Frame")
-        container.Size = UDim2.new(1,0,0,45)
-        container.BackgroundColor3 = Color3.fromRGB(15,15,15)
-        container.BackgroundTransparency = 0.2
-        container.Parent = parentFrame
-        Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
-        Instance.new("UIStroke", container).Color = Color3.fromRGB(0,120,255)
-
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0.6,0,1,0)
-        label.Position = UDim2.new(0,12,0,0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 14
-        label.TextColor3 = Color3.fromRGB(0,120,255)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Text = "Instant Grab Range"
-        label.Parent = container
-
-        local textbox = Instance.new("TextBox")
-radioTextbox = textbox
-        textbox.Size = UDim2.new(0,80,0,30)
-        textbox.Position = UDim2.new(1,-90,0.5,-15)
-        textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
-        textbox.TextColor3 = Color3.new(1,1,1)
-        textbox.Font = Enum.Font.Gotham
-        textbox.TextSize = 14
-        textbox.Text = tostring(grabRadius)
-        textbox.ClearTextOnFocus = false
-        textbox.Parent = container
-        Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,6)
-        Instance.new("UIStroke", textbox).Color = Color3.fromRGB(0,120,255)
-
-        textbox.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                if setGrabRadius(textbox.Text) then
-                    syncGrabRadiusText()
-                else
-                    syncGrabRadiusText()
-                end
-            end
-        end)
-
-        return
-    end
 
     -- Toggle normal
     local container = Instance.new("Frame")
@@ -4530,7 +4459,6 @@ elseif text == "Instant Grab" then
 
             repeat task.wait() until progressBarBg and progressFill and percentLabel
             progressBarBg.Visible = true
-            progressRadiusBox.Visible = true
 
             while autoStealEnabled do
 
@@ -4739,9 +4667,7 @@ for _,f in ipairs(playerFuncs) do CreateToggle("Player",f) end
 local visualFuncs = {"ESP Players","Xray Base","Optimizer","Anti FPS Devourer","No Camera Collision","FOV"}
 for _,f in ipairs(visualFuncs) do CreateToggle("Visual",f) end
 
--- Radio Steal Nearest en Settings
 CreateToggle("Settings","Lock UI")
-CreateToggle("Settings","Radio Steal Nearest")
 
 -- Radio Lock Target
 do
@@ -5602,7 +5528,6 @@ elseif text == "Instant Grab" then
 
             repeat task.wait() until progressBarBg and progressFill and percentLabel
             progressBarBg.Visible = true
-            progressRadiusBox.Visible = true
 
             while autoStealEnabled do
 
