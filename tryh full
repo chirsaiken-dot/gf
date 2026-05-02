@@ -16,7 +16,7 @@ local BUTTON_BLUE = Color3.fromRGB(102,191,255)
 
 local HttpService = game:GetService("HttpService")
 
-local FolderName = "Tyriq Hub"
+local FolderName = "Kawtan Hub"
 local FileName = FolderName.."/tyriqconfig.json"
 
 local Config = {
@@ -1034,7 +1034,7 @@ main.Position = UDim2.new(
     Config["AutoPlay GUI Y"],
     Config["AutoPlay GUI OffsetY"]
 )
-main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+main.BackgroundColor3 = Color3.fromRGB(102,191,255)
 main.BackgroundTransparency = 0.35
 main.Parent = gui
 
@@ -1091,7 +1091,7 @@ minimizeButton.BackgroundTransparency = 1
 minimizeButton.Text = "▲"
 minimizeButton.Font = Enum.Font.GothamBold
 minimizeButton.TextSize = 18
-minimizeButton.TextColor3 = Color3.fromRGB(25,25,25)
+minimizeButton.TextColor3 = Color3.fromRGB(102,191,255)
 minimizeButton.Parent = main
 
 local pointElements = {}
@@ -1124,7 +1124,7 @@ local function createPoint(yPos, text, index)
 local box1 = Instance.new("TextBox")
 box1.Size = UDim2.new(0.3,0,1,0)
 box1.Position = UDim2.new(0.35,0,0,0)
-box1.BackgroundColor3 = Color3.fromRGB(25,25,25)
+box1.BackgroundColor3 = Color3.fromRGB(102,191,255)
 box1.Text = tostring(Config["AutoPlay Point"..index.." Z"])
 box1.TextColor3 = Color3.fromRGB(255,255,255)
 box1.Font = Enum.Font.Gotham
@@ -1140,7 +1140,7 @@ stroke1.Parent = box1
 local box2 = Instance.new("TextBox")
 box2.Size = UDim2.new(0.3,0,1,0)
 box2.Position = UDim2.new(0.7,0,0,0)
-box2.BackgroundColor3 = Color3.fromRGB(25,25,25)
+box2.BackgroundColor3 = Color3.fromRGB(102,191,255)
 box2.Text = tostring(Config["AutoPlay Point"..index.." X"])
 box2.TextColor3 = Color3.fromRGB(255,255,255)
 box2.Font = Enum.Font.Gotham
@@ -1206,7 +1206,7 @@ label.Parent = frame
 local box = Instance.new("TextBox")
 box.Size = UDim2.new(0.45,0,1,0)
 box.Position = UDim2.new(0.55,0,0,0)
-box.BackgroundColor3 = Color3.fromRGB(25,25,25)
+box.BackgroundColor3 = Color3.fromRGB(102,191,255)
 box.Text = tostring(defaultValue or "")
 box.TextColor3 = Color3.fromRGB(255,255,255)
 box.Font = Enum.Font.Gotham
@@ -1923,7 +1923,7 @@ main.Position = UDim2.new(
     Config["Speed GUI OffsetY"]
 )
 
-main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+main.BackgroundColor3 = Color3.fromRGB(102,191,255)
 
 main.BackgroundTransparency = 0.35
 
@@ -2054,12 +2054,12 @@ Instance.new("UICorner", tabDesync).CornerRadius = UDim.new(0,6)
 
 local function refreshSpeedModeTabs()
     if speedMode == "Desync Speed" then
-        tabDesync.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabDesync.BackgroundColor3 = Color3.fromRGB(102,191,255)
         tabNormal.BackgroundColor3 = BUTTON_BLUE
         tabDesync.TextColor3 = Color3.fromRGB(255,255,255)
         tabNormal.TextColor3 = Color3.fromRGB(170,170,170)
     else
-        tabNormal.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        tabNormal.BackgroundColor3 = Color3.fromRGB(102,191,255)
         tabDesync.BackgroundColor3 = BUTTON_BLUE
         tabNormal.TextColor3 = Color3.fromRGB(255,255,255)
         tabDesync.TextColor3 = Color3.fromRGB(170,170,170)
@@ -2113,7 +2113,7 @@ local function createRow(text,posY,default)
 
     box.Position = UDim2.new(0.55,5,0,posY)
 
-    box.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    box.BackgroundColor3 = Color3.fromRGB(102,191,255)
 
     box.TextColor3 = Color3.fromRGB(255,255,255)
 
@@ -2935,7 +2935,7 @@ sg.Parent = lp:WaitForChild("PlayerGui")
 local progressBarBg = Instance.new("Frame")
 progressBarBg.Size = UDim2.new(0,240,0,18)
 progressBarBg.Position = UDim2.new(0.5,-120,0,52)
-progressBarBg.BackgroundColor3 = Color3.fromRGB(255,255,255)
+progressBarBg.BackgroundColor3 = Color3.fromRGB(100,180,255)
 progressBarBg.BackgroundTransparency = 0.2
 progressBarBg.Visible = false
 progressBarBg.Parent = sg
@@ -2945,8 +2945,8 @@ Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0,10)
 local progressShadow = Instance.new("Frame")
 progressShadow.Size = UDim2.new(1,-4,1,-4)
 progressShadow.Position = UDim2.new(0,2,0,2)
-progressShadow.BackgroundColor3 = Color3.fromRGB(10,10,10)
-progressShadow.BackgroundTransparency = 0.35
+progressShadow.BackgroundColor3 = Color3.fromRGB(80,160,240)
+progressShadow.BackgroundTransparency = 0.2
 progressShadow.Parent = progressBarBg
 Instance.new("UICorner", progressShadow).CornerRadius = UDim.new(0,8)
 
@@ -2954,7 +2954,7 @@ Instance.new("UICorner", progressShadow).CornerRadius = UDim.new(0,8)
 local barBg = Instance.new("Frame")
 barBg.Size = UDim2.new(1,-14,0,4)
 barBg.Position = UDim2.new(0,7,0.5,-2)
-barBg.BackgroundColor3 = Color3.fromRGB(10,10,10)
+barBg.BackgroundColor3 = Color3.fromRGB(60,140,220)
 barBg.Parent = progressShadow
 Instance.new("UICorner", barBg).CornerRadius = UDim.new(0,4)
 
@@ -2963,12 +2963,12 @@ local progressFill = Instance.new("Frame")
 progressFill.Size = UDim2.new(0,0,1,0)
 local grad = Instance.new("UIGradient")
 grad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 120, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 80)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 180, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(135, 206, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(173, 225, 255)),
 })
 grad.Parent = progressFill
-progressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+progressFill.BackgroundColor3 = Color3.fromRGB(135, 206, 255)
 progressFill.Parent = barBg
 Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0,4)
 
@@ -3035,7 +3035,7 @@ end
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(0,240,0,32)
 topBar.Position = UDim2.new(0.5,-120,0,15)
-topBar.BackgroundColor3 = Color3.fromRGB(15,15,15)
+topBar.BackgroundColor3 = Color3.fromRGB(102,191,255)
 topBar.BackgroundTransparency = 0.15
 topBar.Parent = sg
 Instance.new("UICorner", topBar).CornerRadius = UDim.new(0,10)
@@ -3066,7 +3066,7 @@ RunService.RenderStepped:Connect(function()
         local dataPing = network.ServerStatsItem:FindFirstChild("Data Ping")
         if dataPing then ping = math.floor(dataPing:GetValue()) end
     end
-    topLabel.Text = "Tyriq Duels | FPS "..fps.." | PING "..ping.." ms"
+    topLabel.Text = "Kawtan Hub | FPS "..fps.." | PING "..ping.." ms"
 end)
 
 -- BOTÓN ABRIR Y CERRAR GUI
@@ -3108,7 +3108,7 @@ local HUB_HEIGHT = 320
 local hub = Instance.new("Frame")
 hub.Size = UDim2.new(0,HUB_WIDTH,0,HUB_HEIGHT)
 hub.Position = UDim2.new(0,-350,0.5,-HUB_HEIGHT/2)
-hub.BackgroundColor3 = Color3.fromRGB(0,0,0)
+hub.BackgroundColor3 = Color3.fromRGB(102,191,255)
 hub.BackgroundTransparency = 0.25
 hub.Parent = sg
 Instance.new("UICorner", hub).CornerRadius = UDim.new(0,14)
@@ -3125,7 +3125,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 20
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextColor3 = BUTTON_BLUE
-title.Text = "Tyriq Duels"
+title.Text = "Kawtan Hub"
 title.Parent = hub
 
 -- AUTO STEAL NEAREST
@@ -3753,7 +3753,7 @@ local function CreateToggle(sectionName,text)
     if text == "Radio Steal Nearest" and sectionName == "Settings" then
         local container = Instance.new("Frame")
         container.Size = UDim2.new(1,0,0,45)
-        container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+        container.BackgroundColor3 = Color3.fromRGB(102,191,255)
         container.BackgroundTransparency = 0.2
         container.Parent = parentFrame
         Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -3804,7 +3804,7 @@ radioTextbox = textbox
     -- Toggle normal
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,0,0,45)
-    container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    container.BackgroundColor3 = Color3.fromRGB(102,191,255)
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -4112,7 +4112,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
+                    Players.LocalPlayer:Kick("KAWTAN HUB ON TOP")
 				end
 
 			end)
@@ -4463,7 +4463,7 @@ end
 -- GUI
 local container = Instance.new("Frame")  
 container.Size = UDim2.new(1,0,0,55)  
-container.BackgroundColor3 = Color3.fromRGB(15,15,15)  
+container.BackgroundColor3 = Color3.fromRGB(102,191,255)  
 container.BackgroundTransparency = 0.2  
 container.LayoutOrder = -999  
 container.Parent = parentFrame  
@@ -4567,7 +4567,7 @@ do
 
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,0,0,45)
-    container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    container.BackgroundColor3 = Color3.fromRGB(102,191,255)
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -4619,7 +4619,7 @@ local parentFrame = frames["Settings"]
 
 local container = Instance.new("Frame")  
 container.Size = UDim2.new(1,0,0,45)  
-container.BackgroundColor3 = Color3.fromRGB(15,15,15)  
+container.BackgroundColor3 = Color3.fromRGB(102,191,255)  
 container.BackgroundTransparency = 0.2  
 container.Parent = parentFrame  
 Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)  
@@ -4672,7 +4672,7 @@ do
 
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,0,0,45)
-    container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    container.BackgroundColor3 = Color3.fromRGB(102,191,255)
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -4719,7 +4719,7 @@ do
 
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,0,0,45)
-    container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    container.BackgroundColor3 = Color3.fromRGB(102,191,255)
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -4767,7 +4767,7 @@ do
 
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,0,0,45)
-    container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    container.BackgroundColor3 = Color3.fromRGB(102,191,255)
     container.BackgroundTransparency = 0.2
     container.Parent = parentFrame
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -4829,7 +4829,7 @@ do
     local function createKeybindRow(labelText, configKey, fallback)
         local container = Instance.new("Frame")
         container.Size = UDim2.new(1,0,0,45)
-        container.BackgroundColor3 = Color3.fromRGB(15,15,15)
+        container.BackgroundColor3 = Color3.fromRGB(102,191,255)
         container.BackgroundTransparency = 0.2
         container.Parent = parentFrame
         Instance.new("UICorner", container).CornerRadius = UDim.new(0,10)
@@ -5228,7 +5228,7 @@ elseif text == "Auto Exit Duel" then
 			sound:GetPropertyChangedSignal("Playing"):Connect(function()
 
 				if sound.Playing then
-                    Players.LocalPlayer:Kick("TYRIQ DUELS ON TOP")
+                    Players.LocalPlayer:Kick("KAWTAN HUB ON TOP")
 				end
 
 			end)
@@ -5537,7 +5537,7 @@ task.spawn(function()
 
             task.spawn(function()
                 while tauntActive do
-                    sendMessage("/Tyriq Duels On Top")
+                    sendMessage("/KAWTAN HUB ON TOP")
                     task.wait(1)
                 end
             end)
