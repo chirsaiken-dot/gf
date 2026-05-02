@@ -49,7 +49,6 @@ local Config = {
     ["Drop Brainrot"] = false,
     ["No Player Collision"] = false,
     ["Fling"] = false,
-    ["Lagger"] = false,
     ["Instant Grab"] = false,
 
     ["LockButtonX"] = 0.5,
@@ -91,11 +90,6 @@ local Config = {
     ["AutoPlay GUI Y"] = 0.15,
     ["AutoPlay GUI OffsetX"] = -100,
     ["AutoPlay GUI OffsetY"] = 0,
-
-    ["Lagger GUI X"] = 0.5,
-    ["Lagger GUI Y"] = 0.25,
-    ["Lagger GUI OffsetX"] = -100,
-    ["Lagger GUI OffsetY"] = 0,
 
     ["Speed GUI X"] = 0.5,
     ["Speed GUI Y"] = 0.2,
@@ -2927,99 +2921,6 @@ function destroyFlingGui()
 
 end
 
-local laggerGui
-local laggerEnabled = false
-
-local function setLaggerState(state)
-    laggerEnabled = state
-    pcall(function()
-        raknet.desync(laggerEnabled)
-    end)
-end
-
-function createLaggerGui()
-    if laggerGui then return end
-
-    laggerGui = Instance.new("ScreenGui")
-    laggerGui.Name = "LaggerGui"
-    laggerGui.ResetOnSpawn = false
-    laggerGui.Parent = game:GetService("CoreGui")
-
-    local main = Instance.new("Frame")
-    main.Size = UDim2.new(0,200,0,90)
-    main.Position = UDim2.new(
-        Config["Lagger GUI X"],
-        Config["Lagger GUI OffsetX"],
-        Config["Lagger GUI Y"],
-        Config["Lagger GUI OffsetY"]
-    )
-    main.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    main.BackgroundTransparency = 0.35
-    main.Parent = laggerGui
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255,255,255)
-    stroke.Thickness = 2
-    stroke.Parent = main
-
-    local dragHandle = Instance.new("Frame")
-    dragHandle.Size = UDim2.new(1,0,0,30)
-    dragHandle.BackgroundTransparency = 1
-    dragHandle.Parent = main
-
-    main.Active = true
-    main.Draggable = not UILocked
-
-    main:GetPropertyChangedSignal("Position"):Connect(function()
-        Config["Lagger GUI X"] = main.Position.X.Scale
-        Config["Lagger GUI OffsetX"] = main.Position.X.Offset
-        Config["Lagger GUI Y"] = main.Position.Y.Scale
-        Config["Lagger GUI OffsetY"] = main.Position.Y.Offset
-        SaveConfig()
-    end)
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1,-24,0,30)
-    title.Position = UDim2.new(0,12,0,0)
-    title.BackgroundTransparency = 1
-    title.Text = "Lagger"
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 15
-    title.TextColor3 = Color3.fromRGB(255,255,255)
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = main
-
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0,180,0,34)
-    toggle.Position = UDim2.new(0.5,-90,0,36)
-    toggle.BackgroundColor3 = BUTTON_BLUE
-    toggle.TextColor3 = Color3.fromRGB(255,255,255)
-    toggle.TextSize = 14
-    toggle.Font = Enum.Font.GothamBold
-    toggle.Text = laggerEnabled and "ON" or "OFF"
-    toggle.Parent = main
-    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,6)
-
-    local btnStroke = Instance.new("UIStroke")
-    btnStroke.Color = Color3.fromRGB(255,255,255)
-    btnStroke.Thickness = 1
-    btnStroke.Parent = toggle
-
-    toggle.MouseButton1Click:Connect(function()
-        setLaggerState(not laggerEnabled)
-        toggle.Text = laggerEnabled and "ON" or "OFF"
-    end)
-end
-
-function destroyLaggerGui()
-    setLaggerState(false)
-    if laggerGui then
-        laggerGui:Destroy()
-        laggerGui = nil
-    end
-end
-
 task.wait(1)
 
 --////////////////////////////////////////////////////
@@ -3082,21 +2983,32 @@ percentLabel.Text = "0%"
 percentLabel.Visible = false
 percentLabel.Parent = progressShadow
 
--- RADIO (TEXTBOX CIRCULAR A LA DERECHA DE LA BARRA)
-local radiusBox = Instance.new("TextBox")
-radiusBox.Size = UDim2.new(0,44,0,22)
-radiusBox.Position = UDim2.new(0.5,126,0,50)
-radiusBox.BackgroundColor3 = Color3.fromRGB(70,150,230)
-radiusBox.TextColor3 = Color3.fromRGB(255,255,255)
-radiusBox.Font = Enum.Font.GothamBold
-radiusBox.TextSize = 12
-radiusBox.ClearTextOnFocus = false
-radiusBox.Text = "10"
-radiusBox.Parent = sg
-Instance.new("UICorner", radiusBox).CornerRadius = UDim.new(1,0)
-Instance.new("UIStroke", radiusBox).Color = Color3.fromRGB(180,225,255)
+-- RADIUS TEXTBOX (next to bar on the right)
+local radiusTextbox = Instance.new("TextBox")
+radiusTextbox.Size = UDim2.new(0,60,0,30)
+radiusTextbox.Position = UDim2.new(0.5,135,0,52)
+radiusTextbox.BackgroundColor3 = Color3.fromRGB(100,180,255)
+radiusTextbox.BackgroundTransparency = 0.1
+radiusTextbox.Text = tostring(grabRadius)
+radiusTextbox.TextColor3 = Color3.fromRGB(255,255,255)
+radiusTextbox.Font = Enum.Font.GothamBold
+radiusTextbox.TextSize = 14
+radiusTextbox.Parent = sg
+Instance.new("UICorner", radiusTextbox).CornerRadius = UDim.new(0.5,0)
+local radiusStroke = Instance.new("UIStroke")
+radiusStroke.Color = Color3.fromRGB(135,206,255)
+radiusStroke.Thickness = 2
+radiusStroke.Parent = radiusTextbox
 
--- RADIO CÍRCULAR EN EL SUELO
+radiusTextbox.FocusLost:Connect(function()
+    local newRadius = tonumber(radiusTextbox.Text)
+    if newRadius and newRadius > 0 then
+        grabRadius = newRadius
+        createOrUpdateSquare(grabRadius)
+    else
+        radiusTextbox.Text = tostring(grabRadius)
+    end
+end)
 local stealSquarePart = nil
 local circleConnection = nil
 
@@ -3141,24 +3053,6 @@ local function updateSquarePosition()
         end
     end
 end
-
-radiusBox.FocusLost:Connect(function(enterPressed)
-    if not enterPressed then
-        radiusBox.Text = tostring(grabRadius)
-        return
-    end
-
-    local num = tonumber(radiusBox.Text)
-    if num and num > 0 and num <= 1000 then
-        grabRadius = num
-        radiusBox.Text = tostring(grabRadius)
-        if stealSquarePart then
-            stealSquarePart.Size = Vector3.new(0.05, grabRadius*2, grabRadius*2)
-        end
-    else
-        radiusBox.Text = tostring(grabRadius)
-    end
-end)
 
 --////////////////////////////////////////////////////
 -- BARRA SUPERIOR DE FPS Y PING
@@ -3264,7 +3158,7 @@ autoStealEnabled = false
 local dropBrainrotRunning = false
 local fastStealEnabled = false
 local normalGrabRadius = grabRadius
-local radioTextbox = radiusBox
+local radioTextbox
 
 --// AUTO STEAL / INSTANT GRAB (LOGICA VANDER + STEALHITBOX)
 
@@ -3902,6 +3796,7 @@ local function CreateToggle(sectionName,text)
         label.Parent = container
 
         local textbox = Instance.new("TextBox")
+radioTextbox = textbox
         textbox.Size = UDim2.new(0,80,0,30)
         textbox.Position = UDim2.new(1,-90,0.5,-15)
         textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
@@ -3919,9 +3814,6 @@ local function CreateToggle(sectionName,text)
                 local num = tonumber(textbox.Text)
                 if num and num > 0 and num <= 1000 then
                     grabRadius = num
-                    if radioTextbox then
-                        radioTextbox.Text = tostring(grabRadius)
-                    end
                     if stealSquarePart then
                         stealSquarePart.Size = Vector3.new(0.05,grabRadius*2, grabRadius*2)
                     end
@@ -4182,11 +4074,14 @@ elseif text == "Auto Play" then
     end
 
 elseif text == "Lagger" then
-
     if enabled then
-        createLaggerGui()
+        pcall(function()
+            raknet.desync(true)
+        end)
     else
-        destroyLaggerGui()
+        pcall(function()
+            raknet.desync(false)
+        end)
     end
 
 elseif text == "Manual TP" then
@@ -4689,7 +4584,7 @@ end)
 
 end
 
-local combatFuncs = {"Melee Aimbot","Instant Grab","TP Down","Auto Play","Lagger","Drop Brainrot","Lock Target","Auto Medusa","Auto Bat","Fling","Manual TP","Auto Exit Duel"}
+local combatFuncs = {"Melee Aimbot","Instant Grab","TP Down","Auto Play","Drop Brainrot","Lock Target","Auto Medusa","Auto Bat","Fling","Manual TP","Auto Exit Duel","Lagger"}
 for _,f in ipairs(combatFuncs) do CreateToggle("Combat",f) end
 
 local playerFuncs = {"Speed Customizer","No Walk Animation","Anti Ragdoll","Spin Body","Infinite Jump","Super Jump","No Player Collision"}
@@ -5348,9 +5243,6 @@ elseif text == "TP Down" then
             elseif text == "Auto Play" then
                 createAutoPlayGui()
 
-            elseif text == "Lagger" then
-                createLaggerGui()
-
 elseif text == "Manual TP" then
 
     ManualTPEnabled = enabled
@@ -5691,6 +5583,46 @@ task.spawn(function()
             button.BackgroundColor3 = BUTTON_BLUE
         end
 
+    end)
+
+end)
+
+task.spawn(function()
+
+    if game:GetService("CoreGui"):FindFirstChild("LaggerButtonGui") then
+        game:GetService("CoreGui").LaggerButtonGui:Destroy()
+    end
+
+    local laggerGui = Instance.new("ScreenGui")
+    laggerGui.Name = "LaggerButtonGui"
+    laggerGui.ResetOnSpawn = false
+    laggerGui.Parent = game:GetService("CoreGui")
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0,120,0,40)
+    button.Position = UDim2.new(0.500, -483, 0.500, -240)
+    button.Text = "LAGGER"
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.TextColor3 = Color3.new(1,1,1)
+    button.BackgroundColor3 = BUTTON_BLUE
+    button.Parent = laggerGui
+
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
+
+    button.Active = true
+    button.Draggable = not UILocked
+
+    local laggerActive = false
+
+    button.MouseButton1Click:Connect(function()
+        laggerActive = not laggerActive
+        button.Text = laggerActive and "LAGGER ON" or "LAGGER"
+        button.BackgroundColor3 = BUTTON_BLUE
+
+        pcall(function()
+            raknet.desync(laggerActive)
+        end)
     end)
 
 end)
